@@ -315,7 +315,7 @@ export default function LoveStory() {
       </header>
 
       {/* ============================= INTRO ============================= */}
-      <section className="relative mx-auto max-w-3xl px-6 py-28 text-center">
+      <section className="relative mx-auto max-w-3xl px-6 py-16 text-center">
         <p className="fade-up font-serif-elegant text-2xl leading-relaxed text-foreground sm:text-3xl">
           « Chaque photo est un souvenir, chaque souvenir une page. Voici la
           nôtre. »
@@ -332,7 +332,7 @@ export default function LoveStory() {
         return (
           <div key={chapter.id}>
             {/* chapter divider */}
-            <section className="story-divider relative flex min-h-[78svh] items-center justify-center overflow-hidden px-6 text-center">
+            <section className="story-divider relative flex min-h-[42svh] items-center justify-center overflow-hidden px-6 py-16 text-center">
               <div
                 className="absolute inset-0 -z-10"
                 style={{
@@ -373,15 +373,15 @@ export default function LoveStory() {
               return (
                 <section
                   key={photo.file}
-                  className="story-page relative flex min-h-[86svh] items-center py-[6vh]"
+                  className="story-page relative flex items-center py-6 sm:py-8"
                 >
-                  <div className="mx-auto grid w-full max-w-6xl items-center gap-8 px-6 md:grid-cols-2 md:gap-16">
+                  <div className="mx-auto grid w-full max-w-5xl items-center gap-5 px-6 md:grid-cols-2 md:gap-10">
                     {/* media */}
                     <div className={right ? "md:order-2" : ""}>
                       <button
                         type="button"
                         onClick={() => setOpenIndex(flatIndex)}
-                        className="sp-media group relative block w-full overflow-hidden rounded-2xl shadow-[0_30px_60px_-25px_rgba(20,25,50,0.55)] ring-1 ring-black/5"
+                        className="sp-media group relative mx-auto block max-h-[64vh] w-full overflow-hidden rounded-2xl shadow-[0_30px_60px_-25px_rgba(20,25,50,0.55)] ring-1 ring-black/5"
                         style={{ aspectRatio: ASPECT[photo.orientation] }}
                       >
                         <div className="sp-img absolute inset-0 will-change-transform">
@@ -454,7 +454,7 @@ export default function LoveStory() {
       })}
 
       {/* ============================= FOOTER ============================= */}
-      <footer className="relative isolate mt-6 overflow-hidden px-6 py-32 text-center">
+      <footer className="relative isolate mt-6 overflow-hidden px-6 py-20 text-center">
         <div className="absolute inset-0 -z-10 bg-marine-deep" />
         <div className="animate-float-slower absolute -right-16 top-4 -z-10 size-72 rounded-full bg-wed-fuchsia/25 blur-3xl" />
         <div className="animate-float-slow absolute -left-16 bottom-0 -z-10 size-72 rounded-full bg-wed-orange/25 blur-3xl" />
