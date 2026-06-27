@@ -272,6 +272,218 @@
   animation: ken-burns 16s ease-in-out infinite alternate;
 }
 
+/* ============================================================
+   CINEMA / FILM MODE
+   ============================================================ */
+
+/* Cinematic Ken-Burns variants — each photo scene slowly drifts so a
+   still image feels like a moving film frame. */
+@keyframes kb-zoom-in {
+  from {
+    transform: scale(1.02) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.2) translate3d(-2%, -2.5%, 0);
+  }
+}
+@keyframes kb-zoom-out {
+  from {
+    transform: scale(1.2) translate3d(2%, 1.5%, 0);
+  }
+  to {
+    transform: scale(1.03) translate3d(0, 0, 0);
+  }
+}
+@keyframes kb-pan-left {
+  from {
+    transform: scale(1.16) translate3d(3.5%, -1%, 0);
+  }
+  to {
+    transform: scale(1.16) translate3d(-3.5%, -2.5%, 0);
+  }
+}
+@keyframes kb-pan-right {
+  from {
+    transform: scale(1.16) translate3d(-3.5%, 1.5%, 0);
+  }
+  to {
+    transform: scale(1.16) translate3d(3.5%, -1%, 0);
+  }
+}
+.kb {
+  animation-duration: 9s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation-fill-mode: both;
+  will-change: transform;
+}
+.kb-a {
+  animation-name: kb-zoom-in;
+}
+.kb-b {
+  animation-name: kb-zoom-out;
+}
+.kb-c {
+  animation-name: kb-pan-left;
+}
+.kb-d {
+  animation-name: kb-pan-right;
+}
+.film-paused .kb,
+.film-paused .film-grain {
+  animation-play-state: paused;
+}
+
+/* Film grain + subtle projector flicker overlay */
+@keyframes grain-shift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 120px 90px;
+  }
+}
+.film-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
+  mix-blend-mode: overlay;
+  opacity: 0.1;
+  animation: grain-shift 0.5s steps(3) infinite;
+}
+
+/* ---------- Luminous animated backdrops (cine scenes) ---------- */
+.aurora {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  opacity: 0.32;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  will-change: transform;
+}
+@keyframes drift-1 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(7vw, -5vh, 0) scale(1.18);
+  }
+  66% {
+    transform: translate3d(-5vw, 6vh, 0) scale(0.9);
+  }
+}
+@keyframes drift-2 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.05);
+  }
+  50% {
+    transform: translate3d(-8vw, 7vh, 0) scale(0.82);
+  }
+}
+.drift-1 {
+  animation: drift-1 24s ease-in-out infinite;
+}
+.drift-2 {
+  animation: drift-2 30s ease-in-out infinite;
+}
+.spotlight {
+  position: absolute;
+  inset: -25%;
+  pointer-events: none;
+  background: radial-gradient(
+    42% 48% at 50% 32%,
+    rgba(255, 255, 255, 0.06),
+    transparent 70%
+  );
+  animation: spot-sweep 18s ease-in-out infinite alternate;
+}
+@keyframes spot-sweep {
+  0% {
+    transform: translate3d(-12%, 0, 0);
+  }
+  100% {
+    transform: translate3d(12%, 4%, 0);
+  }
+}
+.bokeh {
+  position: absolute;
+  bottom: 6%;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgba(255, 228, 176, 0.9),
+    rgba(255, 228, 176, 0) 65%
+  );
+  filter: blur(1px);
+  opacity: 0;
+  animation-name: bokeh-rise;
+  animation-timing-function: ease-in;
+  animation-iteration-count: infinite;
+}
+@keyframes bokeh-rise {
+  0% {
+    transform: translateY(8vh) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.85;
+  }
+  85% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-72vh) scale(1.1);
+    opacity: 0;
+  }
+}
+
+/* Scene-by-scene scroll: each section snaps full-screen like a film cut */
+html.cine-snap {
+  scroll-snap-type: y mandatory;
+  background: var(--marine-deep);
+}
+html.cine-snap body {
+  background: var(--marine-deep);
+}
+
+/* Background-music button equalizer bars */
+@keyframes eq-bounce {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+.eq-bar {
+  height: 100%;
+  transform-origin: bottom;
+  animation: eq-bounce 0.9s ease-in-out infinite;
+}
+
+/* Per-scene entrance — text rises into the frame like a film title */
+@keyframes film-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+.scene-reveal {
+  opacity: 0;
+}
+[data-active="true"] .scene-reveal {
+  animation: film-reveal 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     opacity: 1;
@@ -281,7 +493,21 @@
   .animate-float-slow,
   .animate-float-slower,
   .animate-scroll-bob,
-  .gold-text {
+  .gold-text,
+  .kb,
+  .film-grain,
+  .eq-bar,
+  .aurora,
+  .drift-1,
+  .drift-2,
+  .spotlight,
+  .bokeh {
     animation: none;
+  }
+  .scene-reveal {
+    opacity: 1;
+  }
+  .bokeh {
+    opacity: 0;
   }
 }

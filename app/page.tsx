@@ -1,5 +1,11 @@
-import LoveStory from "./love-story";
+import Cine from "./cine";
+import MusicPlayer from "./music-player";
 
 export default function Home() {
-  return <LoveStory />;
+  return (
+    <>
+      <Cine />
+      <MusicPlayer />
+    </>
+  );
 }
