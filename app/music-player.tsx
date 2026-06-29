@@ -80,11 +80,11 @@ export default function MusicPlayer() {
         aria-pressed={playing}
         className="group flex items-center gap-3 rounded-full border border-gold/50 bg-marine-deep/80 py-2.5 pl-2.5 pr-4 text-cream shadow-[0_10px_30px_-10px_rgba(10,12,30,0.7)] backdrop-blur-md transition hover:border-gold hover:bg-marine-deep"
       >
-        <span className="flex size-9 items-center justify-center rounded-full bg-gold text-marine-deep transition group-hover:scale-105">
+        <span className="flex size-6 items-center justify-center rounded-full bg-gold text-marine-deep transition group-hover:scale-105">
           {playing ? (
-            <Pause className="size-4 fill-current" />
+            <Pause className="size-3 fill-current" />
           ) : (
-            <Play className="size-4 translate-x-px fill-current" />
+            <Play className="size-3 translate-x-px fill-current" />
           )}
         </span>
 
@@ -109,9 +109,9 @@ export default function MusicPlayer() {
           <Music2 className="size-4 text-gold" aria-hidden />
         )}
 
-        <span className="text-xs font-medium uppercase tracking-[0.2em] text-cream/85">
+        {/* <span className="text-xs font-medium uppercase tracking-[0.2em] text-cream/85">
           {playing ? "Musique" : ready ? "Reprendre" : "Écouter"}
-        </span>
+        </span> */}
       </button>
     </div>
   );

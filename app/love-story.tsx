@@ -176,32 +176,6 @@ export default function LoveStory() {
         });
       });
 
-      // CHAPTER DIVIDERS — big numeral pops, title rises
-      gsap.utils.toArray<HTMLElement>(".story-divider").forEach((div) => {
-        const num = div.querySelector(".div-num");
-        if (num) {
-          gsap.fromTo(
-            num,
-            { scale: 0.72, opacity: 0 },
-            {
-              scale: 1,
-              opacity: 0.1,
-              duration: 1.4,
-              ease: "power2.out",
-              scrollTrigger: { trigger: div, start: "top 75%" },
-            },
-          );
-        }
-        gsap.from(div.querySelectorAll(".div-anim"), {
-          y: 52,
-          opacity: 0,
-          duration: 1,
-          stagger: 0.15,
-          ease: "power3.out",
-          scrollTrigger: { trigger: div, start: "top 68%" },
-        });
-      });
-
       // misc fade-ups (intro / footer)
       gsap.utils.toArray<HTMLElement>(".fade-up").forEach((el) => {
         gsap.from(el, {
@@ -331,41 +305,6 @@ export default function LoveStory() {
         const accent = ACCENT[chapter.accent];
         return (
           <div key={chapter.id}>
-            {/* chapter divider */}
-            <section className="story-divider relative flex min-h-[42svh] items-center justify-center overflow-hidden px-6 py-16 text-center">
-              <div
-                className="absolute inset-0 -z-10"
-                style={{
-                  background:
-                    "radial-gradient(80% 60% at 50% 40%, color-mix(in oklch, " +
-                    accent.varName +
-                    " 14%, transparent), transparent 70%)",
-                }}
-              />
-              <span
-                className={`div-num pointer-events-none absolute select-none font-display text-[42vh] font-bold leading-none ${accent.text}`}
-                aria-hidden
-              >
-                {chapter.index}
-              </span>
-              <div className="relative">
-                <p
-                  className={`div-anim mb-3 text-xs font-medium uppercase tracking-[0.4em] ${accent.text}`}
-                >
-                  {chapter.eyebrow}
-                </p>
-                <h2 className="div-anim font-display text-4xl font-semibold text-foreground sm:text-6xl">
-                  {chapter.title}
-                </h2>
-                <div
-                  className={`div-anim mx-auto mt-5 h-px w-40 bg-gradient-to-r from-transparent ${accent.via} to-transparent`}
-                />
-                <p className="div-anim mx-auto mt-5 max-w-xl font-serif-elegant text-lg italic text-muted-foreground">
-                  {chapter.subtitle}
-                </p>
-              </div>
-            </section>
-
             {/* one photo / one description per page, alternating sides */}
             {chapter.photos.map((photo, pi) => {
               const flatIndex = offsets[ci] + pi;
@@ -414,26 +353,18 @@ export default function LoveStory() {
                         }`}
                       >
                         <span className={`h-px w-10 ${accent.bg}`} />
-                        <span
-                          className={`text-xs font-medium uppercase tracking-[0.3em] ${accent.text}`}
-                        >
-                          {chapter.title}
-                        </span>
+                        <span className={`size-1.5 rounded-full ${accent.bg}`} />
+                        <span className={`h-px w-10 ${accent.bg}`} />
                       </div>
 
                       <p
-                        className={`sp-anim mt-4 font-script text-3xl ${accent.text} sm:text-4xl`}
+                        className={`sp-anim mt-4 font-script text-2xl ${accent.text} sm:text-3xl`}
                       >
                         Souvenir n°{String(flatIndex + 1).padStart(2, "0")}
                       </p>
 
-                      <h3 className="sp-anim mt-3 font-display text-3xl font-semibold leading-tight text-foreground sm:text-[2.6rem]">
-                        {photo.caption}
-                      </h3>
-
-                      <p className="sp-anim mt-5 max-w-md font-serif-elegant text-lg italic leading-relaxed text-muted-foreground">
-                        Un instant de notre histoire, gravé pour toujours dans le
-                        chapitre « {chapter.title} ».
+                      <p className="sp-anim mt-4 max-w-md font-serif-elegant text-xl italic leading-relaxed text-foreground/90 sm:text-2xl">
+                        {photo.description}
                       </p>
 
                       <button

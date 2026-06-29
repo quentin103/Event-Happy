@@ -14,18 +14,11 @@ import {
   chapters,
   src,
   ASPECT,
+  HERO_PHOTO,
   type Chapter,
   type Photo,
 } from "./love-story-data";
 
-const HERO_PHOTO = "WhatsApp Image 2026-06-19 at 16.52.02 (1).jpeg";
-
-const ACCENT_TEXT: Record<Chapter["accent"], string> = {
-  gold: "text-gold",
-  "wed-orange": "text-wed-orange",
-  "wed-fuchsia": "text-wed-fuchsia",
-  marine: "text-marine",
-};
 const ACCENT_VAR: Record<Chapter["accent"], string> = {
   gold: "var(--gold)",
   "wed-orange": "var(--wed-orange)",
@@ -49,7 +42,6 @@ const GROUP = 2;
 type PhotoItem = { photo: Photo; n: number };
 type Scene =
   | { kind: "title" }
-  | { kind: "chapter"; chapter: Chapter }
   | { kind: "photos"; chapter: Chapter; items: PhotoItem[] }
   | { kind: "credits" };
 
@@ -57,7 +49,6 @@ function buildScenes(): Scene[] {
   const s: Scene[] = [{ kind: "title" }];
   let n = 0;
   chapters.forEach((ch) => {
-    s.push({ kind: "chapter", chapter: ch });
     const items: PhotoItem[] = ch.photos.map((photo) => ({
       photo,
       n: (n += 1),
@@ -90,9 +81,9 @@ const VIEWPORT = { amount: 0.4 as const, once: false };
 function Ornament({ className = "" }: { className?: string }) {
   return (
     <div className={`flex items-center justify-center gap-3 ${className}`}>
-      <span className="h-px w-12 bg-gradient-to-r from-transparent to-gold/70 sm:w-20" />
+      <span className="h-px w-12 bg-linear-to-r from-transparent to-gold/70 sm:w-20" />
       <Heart className="size-4 fill-gold text-gold" />
-      <span className="h-px w-12 bg-gradient-to-l from-transparent to-gold/70 sm:w-20" />
+      <span className="h-px w-12 bg-linear-to-l from-transparent to-gold/70 sm:w-20" />
     </div>
   );
 }
@@ -109,16 +100,16 @@ export default function Cine() {
   return (
     <div className="relative text-cream">
       {/* fixed cinematic overlays above every scene */}
-      <div className="pointer-events-none fixed inset-0 z-40">
+      {/* <div className="pointer-events-none fixed inset-0 z-40">
         <div className="film-grain absolute inset-0" />
         <div className="absolute inset-x-0 top-0 h-[4vh] bg-black" />
         <div className="absolute inset-x-0 bottom-0 h-[4vh] bg-black" />
-      </div>
+      </div> */}
 
       {scenes.map((sc, i) => (
         <section
           key={i}
-          className="relative h-[100svh] w-full snap-start snap-always overflow-hidden"
+          className="relative h-svh w-full snap-start snap-always overflow-hidden"
         >
           <SceneView scene={sc} seed={i} />
           {i === 0 && (
@@ -276,7 +267,7 @@ function TiltPhoto({
             transformPerspective: 1000,
             aspectRatio: ASPECT[photo.orientation],
           }}
-          className={`relative overflow-hidden rounded-2xl bg-black shadow-[0_30px_70px_-28px_rgba(0,0,0,0.85)] ring-1 ring-white/15 ${sizeClass}`}
+          className={`relative overflow-hidden rounded-2xl bg-black ring-1 ring-white/15 ${sizeClass}`}
         >
           <Image
             src={src(photo.file)}
@@ -323,8 +314,6 @@ function layoutFor(seed: number, count: number): string[] {
 /* ============================================================ */
 function SceneView({ scene, seed }: { scene: Scene; seed: number }) {
   if (scene.kind === "title") return <TitleScene />;
-  if (scene.kind === "chapter")
-    return <ChapterScene chapter={scene.chapter} seed={seed} />;
   if (scene.kind === "photos")
     return (
       <PhotosScene
@@ -352,7 +341,7 @@ function TitleScene() {
       onMouseMove={onMove}
       className="relative flex h-full w-full flex-col items-center justify-center px-6 text-center"
     >
-      <motion.div className="absolute inset-0" style={{ x: mx, y: my }}>
+      <motion.div className=" absolute inset-0" >
         <div className="absolute inset-[-6%]">
           <Image
             src={src(HERO_PHOTO)}
@@ -395,7 +384,7 @@ function TitleScene() {
         </motion.p>
         <motion.h1
           variants={ITEM}
-          className="font-script text-6xl leading-[0.95] text-cream drop-shadow-[0_2px_22px_rgba(0,0,0,0.7)] sm:text-8xl md:text-9xl"
+          className="font-script text-6xl leading-[0.95] text-[#D22167] drop-shadow-[0_2px_22px_rgba(0,0,0,0.7)] sm:text-8xl md:text-9xl"
         >
           Lyce Andréa
         </motion.h1>
@@ -407,7 +396,7 @@ function TitleScene() {
         </motion.span>
         <motion.h1
           variants={ITEM}
-          className="font-script text-6xl leading-[0.95] text-cream drop-shadow-[0_2px_22px_rgba(0,0,0,0.7)] sm:text-8xl md:text-9xl"
+          className="font-script text-6xl leading-[0.95] text-[#EE5F1B] drop-shadow-[0_2px_22px_rgba(0,0,0,0.7)] sm:text-8xl md:text-9xl"
         >
           Joseph
         </motion.h1>
@@ -419,77 +408,32 @@ function TitleScene() {
   );
 }
 
-function ChapterScene({
-  chapter,
-  seed,
-}: {
-  chapter: Chapter;
-  seed: number;
-}) {
-  const accentVar = ACCENT_VAR[chapter.accent];
-  return (
-    <div className="relative flex h-full w-full flex-col items-center justify-center px-6 text-center">
-      <Backdrop seed={seed} />
-      <motion.div
-        variants={CONTAINER}
-        initial="hidden"
-        whileInView="visible"
-        viewport={VIEWPORT}
-        className="relative max-w-2xl"
-      >
-        <motion.p
-          variants={ITEM}
-          className={`mb-4 text-xs font-medium uppercase tracking-[0.5em] ${ACCENT_TEXT[chapter.accent]}`}
-        >
-          {chapter.eyebrow}
-        </motion.p>
-        <motion.h2
-          variants={ITEM}
-          className="font-display text-5xl font-semibold text-cream drop-shadow-[0_2px_30px_rgba(0,0,0,0.5)] sm:text-7xl"
-        >
-          {chapter.title}
-        </motion.h2>
-        <motion.div
-          variants={ITEM}
-          className="mx-auto mt-7 h-[2px] w-44 rounded-full"
-          style={{
-            background: `linear-gradient(to right, transparent, ${accentVar}, transparent)`,
-            boxShadow: `0 0 22px 2px color-mix(in oklch, ${accentVar} 60%, transparent)`,
-          }}
-        />
-        <motion.p
-          variants={ITEM}
-          className="mx-auto mt-7 max-w-xl font-serif-elegant text-lg italic text-cream/80 sm:text-xl"
-        >
-          {chapter.subtitle}
-        </motion.p>
-      </motion.div>
-    </div>
-  );
-}
-
 /* free, lightly-styled text zone — just the memory, told plainly, off the
    image (one line per photo, for both or a single one) */
 function StoryText({
-  chapter,
   items,
+  accentVar,
 }: {
-  chapter: Chapter;
   items: PhotoItem[];
+  accentVar: string;
 }) {
   return (
     <motion.div
       variants={ITEM}
       className="w-full max-w-md text-center sm:max-w-[21rem] sm:text-left"
     >
-      <p className="mb-5 text-[11px] font-medium uppercase tracking-[0.45em] text-cream/50">
-        {chapter.title}
-      </p>
+      <div
+        className="mx-auto mb-6 h-[2px] w-16 rounded-full sm:mx-0"
+        style={{
+          background: `linear-gradient(to right, transparent, ${accentVar}, transparent)`,
+          boxShadow: `0 0 16px 1px color-mix(in oklch, ${accentVar} 55%, transparent)`,
+        }}
+      />
       <div className="space-y-5">
         {items.map((it) => (
           <p
             key={it.photo.file}
-            className="font-serif-elegant text-2xl italic leading-relaxed text-cream/90 sm:text-[1.9rem]"
+            className="font-display text-2xl font-medium leading-snug text-cream drop-shadow-[0_2px_14px_rgba(0,0,0,0.6)] sm:text-[1.95rem]"
           >
             {it.photo.caption}.
           </p>
@@ -532,7 +476,7 @@ function PhotosScene({
           textSide ? "flex-col-reverse sm:flex-row" : "flex-col-reverse sm:flex-row-reverse"
         }`}
       >
-        <StoryText chapter={chapter} items={items} />
+        <StoryText items={items} accentVar={accentVar} />
 
         <div className="relative flex items-center justify-center">
           {items.map((it, k) => (

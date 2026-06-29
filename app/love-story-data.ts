@@ -3,6 +3,8 @@ export type Orientation = "portrait" | "landscape" | "square" | "tall";
 export type Photo = {
   file: string;
   caption: string;
+  /** livre d'or — petite description, un brin créative, dans l'esprit de l'événement */
+  description: string;
   orientation: Orientation;
 };
 
@@ -19,8 +21,16 @@ export type Chapter = {
 
 const BASE = "/photo/";
 
-/** Build a Next/Image-safe src from a filename containing spaces & parens. */
-export const src = (file: string) => BASE + encodeURIComponent(file);
+/** Couverture / photo d'accueil (héros). */
+export const HERO_PHOTO =
+  "couverture/WhatsApp Image 2026-06-19 at 16.52.02 (1).jpeg";
+
+/**
+ * Build a public src from a path that may contain sub-folders, spaces & parens.
+ * Each path segment is encoded on its own so the "/" separators are preserved.
+ */
+export const src = (file: string) =>
+  BASE + file.split("/").map(encodeURIComponent).join("/");
 
 export const ASPECT: Record<Orientation, string> = {
   portrait: "3 / 4",
@@ -29,254 +39,354 @@ export const ASPECT: Record<Orientation, string> = {
   square: "1 / 1",
 };
 
+const D = "WhatsApp Image 2026-06-19 at "; // common filename prefix
+
 export const chapters: Chapter[] = [
   {
-    id: "premiers-regards",
+    id: "ancienne-photo",
     index: "I",
     eyebrow: "Le commencement",
-    title: "Les Premiers Regards",
+    title: "Les Débuts",
     subtitle:
       "Là où tout a commencé — deux jeunes cœurs, une étincelle, une évidence.",
     accent: "gold",
     photos: [
       {
-        file: "WhatsApp Image 2026-06-19 at 16.52.37.jpeg",
-        caption: "Nos premiers fous rires, déjà complices",
-        orientation: "portrait",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.39 (2).jpeg",
-        caption: "Deux regards, et déjà des étincelles",
-        orientation: "square",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.41 (2).jpeg",
-        caption: "Élégants et déjà fous l'un de l'autre",
-        orientation: "portrait",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.37 (3).jpeg",
+        file: `Ancienne photo/${D}16.52.37 (3).jpeg`,
         caption: "Un miroir, un clic, et c'est nous deux",
+        description:
+          "Un selfie volé dans le miroir, premier portrait d'une histoire qui ne fait que commencer.",
         orientation: "portrait",
       },
       {
-        file: "WhatsApp Image 2026-06-19 at 16.52.40 (2).jpeg",
-        caption: "À la maison, le bonheur tout simple",
+        file: `Ancienne photo/${D}16.52.40.jpeg`,
+        caption: "Un selfie, et tout un éclat de joie",
+        description:
+          "Un bras tendu, un éclat de rire, et notre bonheur capturé d'un seul clic.",
         orientation: "portrait",
       },
       {
-        file: "WhatsApp Image 2026-06-19 at 16.52.40 (5).jpeg",
-        caption: "Collés-serrés, le cœur tout léger",
+        file: `Ancienne photo/${D}16.52.40 (3).jpeg`,
+        caption: "En voiture, des sourires plein le cœur",
+        description:
+          "Sur la banquette, deux complices qui chantent faux et rient fort.",
+        orientation: "portrait",
+      },
+      {
+        file: `Ancienne photo/${D}16.52.41 (1).jpeg`,
+        caption: "Le soleil, la plage, et nous deux",
+        description:
+          "Du soleil plein la peau et toi à mes côtés : la définition même d'un jour parfait.",
         orientation: "square",
       },
       {
-        file: "WhatsApp Image 2026-06-19 at 16.52.40 (3).jpeg",
-        caption: "En voiture, des sourires plein le cœur",
+        file: `Ancienne photo/${D}16.52.38 (1).jpeg`,
+        caption: "Pieds dans le sable, cœurs en fête",
+        description:
+          "Les pieds dans le sable, on a laissé tous nos soucis au bord de l'eau.",
         orientation: "portrait",
       },
       {
-        file: "WhatsApp Image 2026-06-19 at 16.52.41 (4).jpeg",
-        caption: "Sur la route, la nuit rien qu'à nous",
-        orientation: "portrait",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.37 (1).jpeg",
-        caption: "Le grand jour des présentations en famille",
+        file: `Ancienne photo/${D}16.52.40 (4).jpeg`,
+        caption: "Un câlin volé en plein soleil",
+        description:
+          "Un câlin volé en plein soleil, parce qu'on n'en a tout simplement jamais assez.",
         orientation: "landscape",
+      },
+      {
+        file: `Ancienne photo/${D}16.52.38.jpeg`,
+        caption: "Sublime, et tout sourire pour toi",
+        description: "Toute pomponnée, et ce sourire-là n'est que pour toi.",
+        orientation: "portrait",
+      },
+      {
+        file: `Ancienne photo/${D}16.52.38 (4).jpeg`,
+        caption: "Quand la nuit fait briller nos yeux",
+        description: "La nuit tombe, et nos yeux n'en brillent que plus fort.",
+        orientation: "portrait",
       },
     ],
   },
   {
-    id: "nos-aventures",
+    id: "dans-la-maison",
     index: "II",
-    eyebrow: "Main dans la main",
-    title: "Nos Aventures",
+    eyebrow: "Notre cocon",
+    title: "À la Maison",
     subtitle:
-      "Voyages, sorties et fous rires — chaque jour une nouvelle page à écrire.",
+      "Pas besoin de grand-chose — un toit, un sourire, tout notre monde.",
     accent: "wed-orange",
     photos: [
       {
-        file: "WhatsApp Image 2026-06-19 at 16.52.38 (1).jpeg",
-        caption: "Pieds dans le sable, cœurs en fête",
+        file: `Dans la maison/${D}16.52.02 (4).jpeg`,
+        caption: "Élégance, tendresse et regards complices",
+        description:
+          "Un brin d'élégance, beaucoup de tendresse, et toujours ce même regard complice.",
         orientation: "portrait",
       },
       {
-        file: "WhatsApp Image 2026-06-19 at 16.52.41 (1).jpeg",
-        caption: "Le soleil, la plage, et nous deux",
-        orientation: "square",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.35.jpeg",
-        caption: "La tête dans les nuages, le sourire au ciel",
-        orientation: "portrait",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.39 (4).jpeg",
-        caption: "Complices jusqu'à la dernière bêtise",
-        orientation: "portrait",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.39 (3).jpeg",
-        caption: "En route vers mille nouvelles aventures",
-        orientation: "portrait",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.40.jpeg",
-        caption: "Un selfie, et tout un éclat de joie",
-        orientation: "portrait",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.36 (3).jpeg",
-        caption: "Main dans la main, à travers la ville",
-        orientation: "landscape",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.36 (4).jpeg",
-        caption: "Nos balades qui sentent bon le quotidien",
-        orientation: "portrait",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.40 (4).jpeg",
-        caption: "Un câlin volé en plein soleil",
-        orientation: "landscape",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.40 (1).jpeg",
-        caption: "Une soirée qui scintille de mille feux",
-        orientation: "portrait",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.41 (3).jpeg",
-        caption: "Séance ciné, popcorn et tendresse",
-        orientation: "portrait",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.42 (1).jpeg",
-        caption: "Dîners, confidences et éclats de rire",
-        orientation: "portrait",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.41.jpeg",
-        caption: "Toujours de la fête, toujours ensemble",
-        orientation: "landscape",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.38 (2).jpeg",
-        caption: "Pause café, douceur partagée",
-        orientation: "portrait",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.38 (4).jpeg",
-        caption: "Quand la nuit fait briller nos yeux",
+        file: `Dans la maison/${D}16.52.36.jpeg`,
+        caption: "Hauts en couleur, et fous de joie",
+        description:
+          "Hauts en couleur et fous de joie, à l'image de notre amour.",
         orientation: "portrait",
       },
     ],
   },
   {
-    id: "notre-miracle",
+    id: "en-journee",
     index: "III",
-    eyebrow: "Quand nous sommes devenus trois",
-    title: "Notre Petit Miracle",
+    eyebrow: "Sous le soleil",
+    title: "Au Grand Jour",
+    subtitle:
+      "Balades, sorties et grands sourires — chaque journée une page à écrire.",
+    accent: "wed-fuchsia",
+    photos: [
+      {
+        file: `En journée/${D}16.52.02.jpeg`,
+        caption: "Sous le soleil, nos plus beaux sourires",
+        description:
+          "Sous le soleil, on a offert au monde nos plus beaux sourires.",
+        orientation: "portrait",
+      },
+      {
+        file: `En journée/${D}16.52.02 (3).jpeg`,
+        caption: "Assortis jusqu'au bout des doigts",
+        description:
+          "Mêmes couleurs, même élan : assortis jusqu'au bout des doigts.",
+        orientation: "landscape",
+      },
+      {
+        file: `En journée/${D}16.52.35.jpeg`,
+        caption: "La tête dans les nuages, le sourire au ciel",
+        description:
+          "La tête dans les nuages, mais le cœur bien ancré l'un à l'autre.",
+        orientation: "portrait",
+      },
+      {
+        file: `En journée/${D}16.52.36 (3).jpeg`,
+        caption: "Main dans la main, à travers la ville",
+        description:
+          "On a arpenté la ville main dans la main, sans jamais vraiment regarder le chemin.",
+        orientation: "landscape",
+      },
+      {
+        file: `En journée/${D}16.52.36 (4).jpeg`,
+        caption: "Nos balades qui sentent bon le quotidien",
+        description:
+          "Ces petites balades de rien du tout qui font, mine de rien, les plus beaux souvenirs.",
+        orientation: "portrait",
+      },
+    ],
+  },
+  {
+    id: "en-voiture",
+    index: "IV",
+    eyebrow: "En chemin",
+    title: "Sur la Route",
+    subtitle: "Une nouvelle route, un nouvel horizon — et toujours à deux.",
+    accent: "marine",
+    photos: [
+      {
+        file: `En voiture/${D}16.52.39 (3).jpeg`,
+        caption: "En route vers mille nouvelles aventures",
+        description:
+          "Une nouvelle route, un nouvel horizon, et toujours la même envie d'y aller ensemble.",
+        orientation: "portrait",
+      },
+      {
+        file: `En voiture/${D}16.52.40 (2).jpeg`,
+        caption: "Sur la banquette, le bonheur tout simple",
+        description:
+          "Pas besoin de grand-chose : la route devant, ta main dans la mienne.",
+        orientation: "portrait",
+      },
+    ],
+  },
+  {
+    id: "ensemble",
+    index: "V",
+    eyebrow: "Complices",
+    title: "Tous les Deux",
+    subtitle: "Deux complices, une évidence — et déjà tout un monde à nous.",
+    accent: "gold",
+    photos: [
+      {
+        file: `Ensemble/${D}16.52.37.jpeg`,
+        caption: "Nos premiers fous rires, déjà complices",
+        description:
+          "Avant même les mots, il y a eu ce rire partagé — le tout premier d'une très longue série.",
+        orientation: "portrait",
+      },
+      {
+        file: `Ensemble/${D}16.52.41 (2).jpeg`,
+        caption: "Élégants et déjà fous l'un de l'autre",
+        description:
+          "Tirés à quatre épingles, mais incapables de cacher notre joie d'être ensemble.",
+        orientation: "portrait",
+      },
+      {
+        file: `Ensemble/${D}16.52.37 (1).jpeg`,
+        caption: "Le grand jour des présentations en famille",
+        description:
+          "Le jour où nos deux familles n'en sont plus devenues qu'une seule.",
+        orientation: "landscape",
+      },
+      {
+        file: `Ensemble/${D}16.52.39.jpeg`,
+        caption: "La nuit nous appartient, le cœur en fête",
+        description:
+          "La nuit nous appartient, le cœur en fête et tout l'avenir devant nous.",
+        orientation: "landscape",
+      },
+    ],
+  },
+  {
+    id: "la-nuit",
+    index: "VI",
+    eyebrow: "Quand la nuit tombe",
+    title: "Au Clair de Lune",
+    subtitle:
+      "Quand la nuit s'allume, le monde s'efface — il ne reste que nous.",
+    accent: "wed-fuchsia",
+    photos: [
+      {
+        file: `La nuit/${D}16.52.39 (2).jpeg`,
+        caption: "Deux regards, et déjà des étincelles",
+        description:
+          "On s'est regardés une seule fois, et le cœur avait déjà tout décidé.",
+        orientation: "square",
+      },
+      {
+        file: `La nuit/${D}16.52.40 (5).jpeg`,
+        caption: "Collés-serrés, le cœur tout léger",
+        description:
+          "Serrés l'un contre l'autre, comme si le reste du monde avait disparu.",
+        orientation: "square",
+      },
+      {
+        file: `La nuit/${D}16.52.40 (1).jpeg`,
+        caption: "Une soirée qui scintille de mille feux",
+        description:
+          "Quand la nuit s'allume de mille lumières, c'est encore plus beau à deux.",
+        orientation: "portrait",
+      },
+      {
+        file: `La nuit/${D}16.52.39 (4).jpeg`,
+        caption: "Complices jusqu'à la dernière bêtise",
+        description:
+          "Toujours partants pour une bêtise de plus, du moment qu'on la fait à deux.",
+        orientation: "portrait",
+      },
+      {
+        file: `La nuit/${D}16.52.42 (1).jpeg`,
+        caption: "Dîners, confidences et éclats de rire",
+        description:
+          "Autour d'une table, nos confidences et nos rires qui n'en finissent plus.",
+        orientation: "portrait",
+      },
+      {
+        file: `La nuit/${D}16.52.42.jpeg`,
+        caption: "On trinque à la vie, à nous, à demain",
+        description:
+          "On lève nos verres à la vie, à nous deux, et à tous les demains qu'il nous reste à écrire.",
+        orientation: "landscape",
+      },
+    ],
+  },
+  {
+    id: "ensemble-events",
+    index: "VII",
+    eyebrow: "En fête",
+    title: "Les Grands Jours",
+    subtitle:
+      "Élégants, rayonnants — toujours côte à côte aux plus belles occasions.",
+    accent: "wed-orange",
+    photos: [
+      {
+        file: `Ensemble a des events/${D}16.52.41.jpeg`,
+        caption: "Toujours de la fête, toujours ensemble",
+        description:
+          "Là où il y a de la fête, on y est — et toujours côte à côte.",
+        orientation: "landscape",
+      },
+      {
+        file: `Ensemble a des events/${D}16.52.03.jpeg`,
+        caption: "Côte à côte, partout où la vie nous mène",
+        description:
+          "Où que la vie nous emmène, on y avance épaule contre épaule.",
+        orientation: "landscape",
+      },
+      {
+        file: `Ensemble a des events/${D}16.52.37 (4).jpeg`,
+        caption: "Une épaule, un refuge, mon amour",
+        description: "Ton épaule, mon refuge préféré, en toutes circonstances.",
+        orientation: "portrait",
+      },
+      {
+        file: `Ensemble a des events/${D}16.52.37 (2).jpeg`,
+        caption: "Sous les étoiles, rien que nous deux",
+        description:
+          "Sous les étoiles, le monde s'efface : il ne reste plus que nous deux.",
+        orientation: "portrait",
+      },
+      {
+        file: `Ensemble a des events/${D}16.52.41 (3).jpeg`,
+        caption: "Séance ciné, popcorn et tendresse",
+        description:
+          "Lumières tamisées, popcorn partagé et ta main bien au chaud dans la mienne.",
+        orientation: "portrait",
+      },
+      {
+        file: `Ensemble a des events/${D}16.52.36 (2).jpeg`,
+        caption: "Un dernier été de fiancés, le cœur léger",
+        description: "Notre tout dernier été de fiancés, savouré le cœur léger.",
+        orientation: "portrait",
+      },
+    ],
+  },
+  {
+    id: "fermer",
+    index: "VIII",
+    eyebrow: "Tout près",
+    title: "Tout Près",
+    subtitle: "Une douceur partagée, un bonheur tout simple, juste nous deux.",
+    accent: "marine",
+    photos: [
+      {
+        file: `Fermer/${D}16.52.38 (2).jpeg`,
+        caption: "Pause café, douceur partagée",
+        description:
+          "Une pause café, deux tasses et mille petites douceurs partagées.",
+        orientation: "portrait",
+      },
+      {
+        file: `Fermer/${D}16.52.38 (5).jpeg`,
+        caption: "Reflets de notre bonheur éclatant",
+        description: "Chaque reflet raconte le même bonheur, éclatant et partagé.",
+        orientation: "portrait",
+      },
+    ],
+  },
+  {
+    id: "la-famille",
+    index: "IX",
+    eyebrow: "À trois",
+    title: "Notre Famille",
     subtitle: "Le plus beau des cadeaux est venu faire déborder notre amour.",
     accent: "wed-fuchsia",
     photos: [
       {
-        file: "WhatsApp Image 2026-06-19 at 16.52.36 (1).jpeg",
+        file: `La famille/${D}16.52.36 (1).jpeg`,
         caption: "L'attente la plus douce de notre vie",
+        description:
+          "Neuf mois à rêver à trois — l'attente la plus douce qu'on ait jamais connue.",
         orientation: "square",
       },
       {
-        file: "WhatsApp Image 2026-06-19 at 16.52.16.jpeg",
+        file: `La famille/${D}16.52.16.jpeg`,
         caption: "Et nous voilà trois, comblés de bonheur",
-        orientation: "portrait",
-      },
-    ],
-  },
-  {
-    id: "grand-jour",
-    index: "IV",
-    eyebrow: "L'amour qui mène à l'autel",
-    title: "Vers le Grand Jour",
-    subtitle:
-      "Élégants, rayonnants — chaque instant nous rapproche un peu plus du oui.",
-    accent: "marine",
-    photos: [
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.42.jpeg",
-        caption: "On trinque à la vie, à nous, à demain",
-        orientation: "landscape",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.03.jpeg",
-        caption: "Côte à côte, partout où la vie nous mène",
-        orientation: "landscape",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.02 (3).jpeg",
-        caption: "Assortis jusqu'au bout des doigts",
-        orientation: "landscape",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.02 (4).jpeg",
-        caption: "Élégance, tendresse et regards complices",
-        orientation: "portrait",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.02.jpeg",
-        caption: "Sous le soleil, nos plus beaux sourires",
-        orientation: "portrait",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.36.jpeg",
-        caption: "Hauts en couleur, et fous de joie",
-        orientation: "portrait",
-      },
-      // — la robe verte, même soirée élégante, regroupées —
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.37 (4).jpeg",
-        caption: "Une épaule, un refuge, mon amour",
-        orientation: "portrait",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.39 (1).jpeg",
-        caption: "Rayonnante de bonheur, à ton bras",
-        orientation: "portrait",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.38.jpeg",
-        caption: "Sublime, et tout sourire pour toi",
-        orientation: "portrait",
-      },
-      // — les soirées qui scintillent —
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.37 (2).jpeg",
-        caption: "Sous les étoiles, rien que nous deux",
-        orientation: "portrait",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.39.jpeg",
-        caption: "La nuit nous appartient, le cœur en fête",
-        orientation: "landscape",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.38 (5).jpeg",
-        caption: "Reflets de notre bonheur éclatant",
-        orientation: "portrait",
-      },
-      // — le grand jardin en costume, même journée, en bouquet final —
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.38 (3).jpeg",
-        caption: "Sur notre trente-et-un, prêts à tout",
-        orientation: "portrait",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.36 (2).jpeg",
-        caption: "Un dernier été de fiancés, le cœur léger",
-        orientation: "portrait",
-      },
-      {
-        file: "WhatsApp Image 2026-06-19 at 16.52.02 (1).jpeg",
-        caption: "Beaux, amoureux, et bientôt mariés",
+        description:
+          "Un petit cœur en plus, et notre amour qui se met à déborder de partout.",
         orientation: "portrait",
       },
     ],
