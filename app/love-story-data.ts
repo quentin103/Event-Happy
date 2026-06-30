@@ -25,6 +25,9 @@ const BASE = "/photo/";
 export const HERO_PHOTO =
   "couverture/WhatsApp Image 2026-06-19 at 16.52.02 (1).jpeg";
 
+/** Photo de clôture, à côté du livre d'or (section « merci aux invités »). */
+export const GUESTBOOK_PHOTO = "A la fin.jpeg";
+
 /**
  * Build a public src from a path that may contain sub-folders, spaces & parens.
  * Each path segment is encoded on its own so the "/" separators are preserved.

@@ -1,20 +1,28 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   motion,
   useSpring,
   useReducedMotion,
   type Variants,
 } from "motion/react";
-import { ChevronDown, Heart, CalendarDays, MapPin } from "lucide-react";
+import {
+  ChevronDown,
+  Heart,
+  CalendarDays,
+  MapPin,
+  ImagePlus,
+  Send,
+} from "lucide-react";
 
 import {
   chapters,
   src,
   ASPECT,
   HERO_PHOTO,
+  GUESTBOOK_PHOTO,
   type Chapter,
   type Photo,
 } from "./love-story-data";
@@ -47,7 +55,8 @@ type PhotoItem = { photo: Photo; n: number };
 type Scene =
   | { kind: "title" }
   | { kind: "photos"; chapter: Chapter; items: PhotoItem[] }
-  | { kind: "credits" };
+  | { kind: "credits" }
+  | { kind: "guestbook" };
 
 function buildScenes(): Scene[] {
   const s: Scene[] = [{ kind: "title" }];
@@ -62,6 +71,7 @@ function buildScenes(): Scene[] {
     }
   });
   s.push({ kind: "credits" });
+  s.push({ kind: "guestbook" });
   return s;
 }
 
@@ -103,14 +113,18 @@ export default function Cine() {
   }, []);
 
   /* défilement automatique : on avance d'un niveau toutes les
-     SCENE_DURATION_MS, en bouclant après le générique. Respecte la
-     préférence « réduire les animations ». */
+     SCENE_DURATION_MS et on s'arrête sur le dernier niveau (générique).
+     Respecte la préférence « réduire les animations ». */
   useEffect(() => {
     if (reduced) return;
     const id = window.setInterval(() => {
       const h = window.innerHeight;
       const current = Math.round(window.scrollY / h);
-      const next = (current + 1) % scenes.length;
+      const next = current + 1;
+      if (next >= scenes.length) {
+        window.clearInterval(id);
+        return;
+      }
       window.scrollTo({ top: next * h, behavior: "smooth" });
     }, SCENE_DURATION_MS);
     return () => window.clearInterval(id);
@@ -284,6 +298,7 @@ function SceneView({ scene, seed }: { scene: Scene; seed: number }) {
         seed={seed}
       />
     );
+  if (scene.kind === "guestbook") return <GuestbookScene seed={seed} />;
   return <CreditsScene seed={seed} />;
 }
 
@@ -510,6 +525,252 @@ function CreditsScene({ seed }: { seed: number }) {
           </span>
         </motion.div>
       </motion.div>
+    </div>
+  );
+}
+
+/* ---------- motif de séparation entre la photo et le formulaire ---------- */
+function SeamMedallion() {
+  return (
+    <span className="relative flex items-center justify-center">
+      {/* halo doux */}
+      <span
+        className="absolute size-20 rounded-full opacity-60 blur-xl"
+        style={{
+          background:
+            "radial-gradient(closest-side, color-mix(in oklch, var(--gold) 65%, transparent), transparent)",
+        }}
+      />
+      {/* anneau pointillé qui tourne lentement */}
+      <motion.svg
+        width="64"
+        height="64"
+        viewBox="0 0 64 64"
+        className="absolute"
+        animate={{ rotate: 360 }}
+        transition={{ duration: 32, repeat: Infinity, ease: "linear" }}
+      >
+        <circle
+          cx="32"
+          cy="32"
+          r="29"
+          fill="none"
+          stroke="var(--gold)"
+          strokeOpacity="0.5"
+          strokeWidth="1"
+          strokeDasharray="2 6"
+          strokeLinecap="round"
+        />
+      </motion.svg>
+      {/* médaillon + cœur doré */}
+      <svg
+        width="52"
+        height="52"
+        viewBox="0 0 52 52"
+        className="relative drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)]"
+      >
+        <circle
+          cx="26"
+          cy="26"
+          r="19"
+          fill="var(--marine-deep)"
+          stroke="var(--gold)"
+          strokeWidth="1.5"
+        />
+        <g transform="translate(14 14)">
+          <path
+            fill="var(--gold)"
+            d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+          />
+        </g>
+      </svg>
+    </span>
+  );
+}
+
+function SeamMotif() {
+  const line = (orientation: "v" | "h") =>
+    orientation === "v"
+      ? "linear-gradient(to bottom, transparent, color-mix(in oklch, var(--gold) 70%, transparent) 16%, color-mix(in oklch, var(--gold) 70%, transparent) 84%, transparent)"
+      : "linear-gradient(to right, transparent, color-mix(in oklch, var(--gold) 70%, transparent) 16%, color-mix(in oklch, var(--gold) 70%, transparent) 84%, transparent)";
+
+  return (
+    <>
+      {/* desktop : séparation verticale au centre */}
+      <div className="pointer-events-none absolute inset-y-0 left-1/2 z-20 hidden -translate-x-1/2 flex-col items-center justify-center sm:flex">
+        <span className="absolute inset-y-0 w-px" style={{ background: line("v") }} />
+        <SeamMedallion />
+      </div>
+      {/* mobile : séparation horizontale au niveau de la couture (≈ 42vh) */}
+      <div className="pointer-events-none absolute inset-x-0 top-[42vh] z-20 flex -translate-y-1/2 items-center justify-center sm:hidden">
+        <span className="absolute inset-x-0 h-px" style={{ background: line("h") }} />
+        <SeamMedallion />
+      </div>
+    </>
+  );
+}
+
+/* ---------- livre d'or : merci aux invités + photo & message ---------- */
+function GuestbookScene({ seed }: { seed: number }) {
+  const [name, setName] = useState("");
+  const [message, setMessage] = useState("");
+  const [preview, setPreview] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+
+  const onPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
+    setFileName(file.name);
+  };
+
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // UI seulement pour l'instant : aucun envoi réel, juste un remerciement.
+    setSent(true);
+  };
+
+  return (
+    <div className="relative flex h-full w-full flex-col sm:flex-row">
+      {/* moitié image — arrière-plan plein cadre */}
+      <motion.div
+        variants={CONTAINER}
+        initial="hidden"
+        whileInView="visible"
+        viewport={VIEWPORT}
+        className="relative h-[42vh] w-full overflow-hidden sm:h-full sm:w-1/2"
+      >
+        <Image
+          src={src(GUESTBOOK_PHOTO)}
+          alt="Merci à nos invités"
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, 50vw"
+          className="object-cover object-[center_28%]"
+        />
+      </motion.div>
+
+      {/* moitié formulaire — texte de remerciement + formulaire, dégradé accordé au fond */}
+      <motion.div
+        variants={CONTAINER}
+        initial="hidden"
+        whileInView="visible"
+        viewport={VIEWPORT}
+        style={{
+          /* horizontal : tout le bord gauche = la couleur de raccord exacte
+             vers laquelle l'image se fond, donc aucune coupure au milieu */
+          background:
+            "linear-gradient(to right, color-mix(in oklch, var(--marine) 60%, var(--marine-deep)) 0%, var(--marine-deep) 50%, color-mix(in oklch, var(--wed-orange) 22%, var(--marine-deep)) 100%)",
+        }}
+        className="relative flex w-full flex-1 items-center justify-center overflow-y-auto px-6 py-8 sm:h-full sm:w-1/2 sm:px-10"
+      >
+        <motion.div variants={ITEM} className="w-full max-w-md text-center sm:text-left">
+          {/* texte de remerciement, bien visible au-dessus du formulaire */}
+          <p className="mb-3 font-serif-elegant text-xs uppercase tracking-[0.4em] text-gold/90">
+            Merci d&apos;être là
+          </p>
+          <h2 className="font-script text-4xl leading-tight text-gold sm:text-5xl">
+            Laissez-nous un souvenir
+          </h2>
+          <p className="mt-3 font-serif-elegant text-sm italic text-cream/80 sm:text-base">
+            Un mot, une photo&nbsp;: offrez-nous un éclat de cette journée à garder
+            pour toujours.
+          </p>
+
+          {sent ? (
+            <div className="mt-8 flex flex-col items-center gap-3 text-center sm:items-start sm:text-left">
+              <Heart className="size-7 fill-gold text-gold" />
+              <p className="font-display text-xl text-cream">
+                Merci{name ? `, ${name}` : ""}&nbsp;!
+              </p>
+              <p className="font-serif-elegant text-sm text-cream/80">
+                Votre message nous touche droit au cœur.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={onSubmit} className="mt-6 space-y-4 text-left">
+              <div>
+                <label
+                  htmlFor="gb-name"
+                  className="mb-1.5 block font-serif-elegant text-xs uppercase tracking-[0.2em] text-cream/70"
+                >
+                  Votre nom
+                </label>
+                <input
+                  id="gb-name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ex : Famille Kouassi"
+                  className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-cream placeholder:text-cream/40 outline-none backdrop-blur-sm transition-colors focus:border-gold/70"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="gb-message"
+                  className="mb-1.5 block font-serif-elegant text-xs uppercase tracking-[0.2em] text-cream/70"
+                >
+                  Votre message
+                </label>
+                <textarea
+                  id="gb-message"
+                  required
+                  rows={3}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Vos vœux, un souvenir, un mot doux…"
+                  className="w-full resize-none rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-cream placeholder:text-cream/40 outline-none backdrop-blur-sm transition-colors focus:border-gold/70"
+                />
+              </div>
+
+              <label
+                htmlFor="gb-photo"
+                className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-gold/40 bg-white/5 px-4 py-3 text-cream/80 transition-colors hover:border-gold/70 hover:bg-white/10"
+              >
+                {preview ? (
+                  <span className="relative size-12 shrink-0 overflow-hidden rounded-lg ring-1 ring-white/20">
+                    {/* aperçu local (blob) — next/image non requis ici */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={preview}
+                      alt="Aperçu"
+                      className="size-full object-cover"
+                    />
+                  </span>
+                ) : (
+                  <ImagePlus className="size-5 shrink-0 text-gold" />
+                )}
+                <span className="truncate font-serif-elegant text-sm">
+                  {fileName ?? "Ajouter une photo"}
+                </span>
+                <input
+                  id="gb-photo"
+                  type="file"
+                  accept="image/*"
+                  onChange={onPhoto}
+                  className="hidden"
+                />
+              </label>
+
+              <button
+                type="submit"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3 font-display text-base font-medium text-marine-deep shadow-lg shadow-black/30 transition-transform hover:scale-[1.02] active:scale-95"
+              >
+                <Send className="size-4" />
+                Envoyer
+              </button>
+            </form>
+          )}
+        </motion.div>
+      </motion.div>
+
+      {/* motif SVG décoratif sur la ligne de séparation photo / formulaire */}
+      <SeamMotif />
     </div>
   );
 }
