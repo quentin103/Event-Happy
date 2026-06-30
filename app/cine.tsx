@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   motion,
   useSpring,
@@ -38,6 +38,10 @@ const BOKEH = [
 
 /* show a couple of photos per scene so each one stays small & crisp */
 const GROUP = 2;
+
+/* durée d'affichage de chaque niveau avant le défilement automatique (ms).
+   Réglable ici : 10 000 ms ≈ 10 secondes par niveau. */
+const SCENE_DURATION_MS = 10_000;
 
 type PhotoItem = { photo: Photo; n: number };
 type Scene =
@@ -91,11 +95,26 @@ function Ornament({ className = "" }: { className?: string }) {
 /* ============================================================ */
 export default function Cine() {
   const scenes = useMemo(() => buildScenes(), []);
+  const reduced = useReducedMotion();
 
   useEffect(() => {
     document.documentElement.classList.add("cine-snap");
     return () => document.documentElement.classList.remove("cine-snap");
   }, []);
+
+  /* défilement automatique : on avance d'un niveau toutes les
+     SCENE_DURATION_MS, en bouclant après le générique. Respecte la
+     préférence « réduire les animations ». */
+  useEffect(() => {
+    if (reduced) return;
+    const id = window.setInterval(() => {
+      const h = window.innerHeight;
+      const current = Math.round(window.scrollY / h);
+      const next = (current + 1) % scenes.length;
+      window.scrollTo({ top: next * h, behavior: "smooth" });
+    }, SCENE_DURATION_MS);
+    return () => window.clearInterval(id);
+  }, [reduced, scenes.length]);
 
   return (
     <div className="relative text-cream">
@@ -216,99 +235,42 @@ function Backdrop({ seed }: { seed: number }) {
   );
 }
 
-/* ---------- interactive 3D-tilt photo ---------- */
-function TiltPhoto({
+/* ---------- still photo (pas d'effet de souris, pas de superposition) ---------- */
+function StillPhoto({
   photo,
   accentVar,
-  wrapperClass,
   sizeClass,
   sizes,
   priority = false,
 }: {
   photo: Photo;
   accentVar: string;
-  wrapperClass: string;
   sizeClass: string;
   sizes: string;
   priority?: boolean;
 }) {
-  const reduced = useReducedMotion();
-  const rx = useSpring(0, { stiffness: 150, damping: 16 });
-  const ry = useSpring(0, { stiffness: 150, damping: 16 });
-
-  const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (reduced) return;
-    const r = e.currentTarget.getBoundingClientRect();
-    const px = (e.clientX - r.left) / r.width - 0.5;
-    const py = (e.clientY - r.top) / r.height - 0.5;
-    ry.set(px * 14);
-    rx.set(-py * 14);
-  };
-  const reset = () => {
-    rx.set(0);
-    ry.set(0);
-  };
-
   return (
-    <div className={`group relative ${wrapperClass}`}>
-      <motion.div variants={ITEM} className="relative">
-        {/* accent halo */}
-        <div
-          className="pointer-events-none absolute -inset-5 rounded-[2.5rem] opacity-25 blur-2xl transition-opacity duration-500 group-hover:opacity-70"
-          style={{ background: `radial-gradient(closest-side, ${accentVar}, transparent)` }}
+    <motion.div variants={ITEM} className="relative">
+      {/* accent halo */}
+      <div
+        className="pointer-events-none absolute -inset-4 rounded-[2.5rem] opacity-30 blur-2xl"
+        style={{ background: `radial-gradient(closest-side, ${accentVar}, transparent)` }}
+      />
+      <div
+        style={{ aspectRatio: ASPECT[photo.orientation] }}
+        className={`relative overflow-hidden rounded-2xl bg-black ring-1 ring-white/15 ${sizeClass}`}
+      >
+        <Image
+          src={src(photo.file)}
+          alt={photo.caption}
+          fill
+          sizes={sizes}
+          priority={priority}
+          className="object-cover object-[center_28%]"
         />
-        <motion.div
-          onMouseMove={onMove}
-          onMouseLeave={reset}
-          whileHover={{ scale: 1.035 }}
-          style={{
-            rotateX: rx,
-            rotateY: ry,
-            transformPerspective: 1000,
-            aspectRatio: ASPECT[photo.orientation],
-          }}
-          className={`relative overflow-hidden rounded-2xl bg-black ring-1 ring-white/15 ${sizeClass}`}
-        >
-          <Image
-            src={src(photo.file)}
-            alt={photo.caption}
-            fill
-            sizes={sizes}
-            priority={priority}
-            className="object-cover object-[center_28%]"
-          />
-        </motion.div>
-      </motion.div>
-    </div>
+      </div>
+    </motion.div>
   );
-}
-
-/* 4 superposition models that rotate so two photos are never arranged
-   the same way twice */
-function layoutFor(seed: number, count: number): string[] {
-  if (count === 1) return ["rotate-[-1.5deg]"];
-  switch (seed % 4) {
-    case 0: // vertical overlap
-      return [
-        "z-10 -rotate-3 translate-y-6 -mr-6 sm:-mr-16",
-        "z-20 rotate-3 -translate-y-6",
-      ];
-    case 1: // tilted apart
-      return [
-        "-rotate-3 -translate-y-4 sm:-translate-y-8",
-        "rotate-3 translate-y-4 sm:translate-y-8",
-      ];
-    case 2: // strong diagonal overlap
-      return [
-        "z-10 -rotate-6 translate-x-3 translate-y-7 sm:translate-x-6 -mr-8 sm:-mr-20",
-        "z-20 rotate-3 -translate-y-7",
-      ];
-    default: // big + small inset, tucked low-left
-      return [
-        "z-10 rotate-2 translate-y-3",
-        "z-20 scale-[0.72] -rotate-3 -ml-10 translate-y-12 sm:-ml-24 sm:translate-y-16",
-      ];
-  }
 }
 
 /* ============================================================ */
@@ -384,7 +346,7 @@ function TitleScene() {
         </motion.p>
         <motion.h1
           variants={ITEM}
-          className="font-script text-6xl leading-[0.95] text-[#D22167] drop-shadow-[0_2px_22px_rgba(0,0,0,0.7)] sm:text-8xl md:text-9xl"
+          className="font-script text-6xl leading-[0.95] text-gold drop-shadow-[0_2px_22px_rgba(0,0,0,0.7)] sm:text-8xl md:text-9xl"
         >
           Lyce Andréa
         </motion.h1>
@@ -396,7 +358,7 @@ function TitleScene() {
         </motion.span>
         <motion.h1
           variants={ITEM}
-          className="font-script text-6xl leading-[0.95] text-[#EE5F1B] drop-shadow-[0_2px_22px_rgba(0,0,0,0.7)] sm:text-8xl md:text-9xl"
+          className="font-script text-6xl leading-[0.95] text-gold drop-shadow-[0_2px_22px_rgba(0,0,0,0.7)] sm:text-8xl md:text-9xl"
         >
           Joseph
         </motion.h1>
@@ -453,15 +415,15 @@ function PhotosScene({
   seed: number;
 }) {
   const accentVar = ACCENT_VAR[chapter.accent];
-  const wraps = layoutFor(seed, items.length);
   const solo = items.length === 1;
-  const sizeClass = solo
-    ? "h-[48vh] max-w-[86vw] sm:h-[74vh] sm:max-w-[44vw]"
-    : "h-[34vh] max-w-[47vw] sm:h-[62vh] sm:max-w-[31vw]";
-  const sizes = solo
-    ? "(max-width: 768px) 86vw, 44vw"
-    : "(max-width: 768px) 47vw, 31vw";
+  /* disposition « aléatoire » mais stable (déterministe via le seed) :
+     une grande + une petite, l'ordre alterne d'un niveau à l'autre. */
+  const bigFirst = seed % 2 === 0;
   const textSide = seed % 2 === 0;
+
+  const soloClass = "h-[50vh] max-w-[86vw] sm:h-[72vh] sm:max-w-[44vw]";
+  const bigClass = "h-[40vh] max-w-[52vw] sm:h-[62vh] sm:max-w-[34vw]";
+  const smallClass = "h-[28vh] max-w-[40vw] sm:h-[44vh] sm:max-w-[26vw]";
 
   return (
     <div className="relative flex h-full w-full items-center justify-center px-4">
@@ -478,18 +440,27 @@ function PhotosScene({
       >
         <StoryText items={items} accentVar={accentVar} />
 
-        <div className="relative flex items-center justify-center">
-          {items.map((it, k) => (
-            <TiltPhoto
-              key={it.photo.file}
-              photo={it.photo}
-              accentVar={accentVar}
-              wrapperClass={wraps[k]}
-              sizeClass={sizeClass}
-              sizes={sizes}
-              priority={seed <= 2}
-            />
-          ))}
+        {/* photos côte à côte, sans superposition */}
+        <div className="relative flex items-center justify-center gap-4 sm:gap-8">
+          {items.map((it, k) => {
+            const isBig = solo || (bigFirst ? k === 0 : k === 1);
+            const sizeClass = solo ? soloClass : isBig ? bigClass : smallClass;
+            const sizes = solo
+              ? "(max-width: 768px) 86vw, 44vw"
+              : isBig
+                ? "(max-width: 768px) 52vw, 34vw"
+                : "(max-width: 768px) 40vw, 26vw";
+            return (
+              <StillPhoto
+                key={it.photo.file}
+                photo={it.photo}
+                accentVar={accentVar}
+                sizeClass={sizeClass}
+                sizes={sizes}
+                priority={seed <= 2}
+              />
+            );
+          })}
         </div>
       </motion.div>
     </div>
