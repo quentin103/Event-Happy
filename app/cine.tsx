@@ -15,6 +15,8 @@ import {
   MapPin,
   ImagePlus,
   Send,
+  Check,
+  X,
 } from "lucide-react";
 
 import {
@@ -601,8 +603,8 @@ function SeamMotif() {
         <span className="absolute inset-y-0 w-px" style={{ background: line("v") }} />
         <SeamMedallion />
       </div>
-      {/* mobile : séparation horizontale au niveau de la couture (≈ 42vh) */}
-      <div className="pointer-events-none absolute inset-x-0 top-[42vh] z-20 flex -translate-y-1/2 items-center justify-center sm:hidden">
+      {/* mobile : séparation horizontale au niveau de la couture (≈ 34vh) */}
+      <div className="pointer-events-none absolute inset-x-0 top-[34vh] z-20 flex -translate-y-1/2 items-center justify-center sm:hidden">
         <span className="absolute inset-x-0 h-px" style={{ background: line("h") }} />
         <SeamMedallion />
       </div>
@@ -617,15 +619,30 @@ function GuestbookScene({ seed }: { seed: number }) {
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const onPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // n'accepte qu'une image — sinon on ignore et on réinitialise le champ
+    if (!file.type.startsWith("image/")) {
+      e.target.value = "";
+      return;
+    }
     setPreview((prev) => {
       if (prev) URL.revokeObjectURL(prev);
       return URL.createObjectURL(file);
     });
     setFileName(file.name);
+  };
+
+  const removePhoto = () => {
+    setPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setFileName(null);
+    if (fileRef.current) fileRef.current.value = "";
   };
 
   const onSubmit = (e: React.FormEvent) => {
@@ -642,7 +659,7 @@ function GuestbookScene({ seed }: { seed: number }) {
         initial="hidden"
         whileInView="visible"
         viewport={VIEWPORT}
-        className="relative h-[42vh] w-full overflow-hidden sm:h-full sm:w-1/2"
+        className="relative h-[34vh] w-full overflow-hidden sm:h-full sm:w-1/2"
       >
         <Image
           src={src(GUESTBOOK_PHOTO)}
@@ -654,19 +671,15 @@ function GuestbookScene({ seed }: { seed: number }) {
         />
       </motion.div>
 
-      {/* moitié formulaire — texte de remerciement + formulaire, dégradé accordé au fond */}
+      {/* moitié formulaire — texte de remerciement + formulaire, fond uni
+         (plus de dégradé : la séparation est marquée par le motif SVG) */}
       <motion.div
         variants={CONTAINER}
         initial="hidden"
         whileInView="visible"
         viewport={VIEWPORT}
-        style={{
-          /* horizontal : tout le bord gauche = la couleur de raccord exacte
-             vers laquelle l'image se fond, donc aucune coupure au milieu */
-          background:
-            "linear-gradient(to right, color-mix(in oklch, var(--marine) 60%, var(--marine-deep)) 0%, var(--marine-deep) 50%, color-mix(in oklch, var(--wed-orange) 22%, var(--marine-deep)) 100%)",
-        }}
-        className="relative flex w-full flex-1 items-center justify-center overflow-y-auto px-6 py-8 sm:h-full sm:w-1/2 sm:px-10"
+        style={{ background: "var(--marine-deep)" }}
+        className="relative flex w-full flex-1 items-center justify-center px-6 py-6 sm:h-full sm:w-1/2 sm:px-10 sm:py-0"
       >
         <motion.div variants={ITEM} className="w-full max-w-md text-center sm:text-left">
           {/* texte de remerciement, bien visible au-dessus du formulaire */}
@@ -692,11 +705,11 @@ function GuestbookScene({ seed }: { seed: number }) {
               </p>
             </div>
           ) : (
-            <form onSubmit={onSubmit} className="mt-6 space-y-4 text-left">
+            <form onSubmit={onSubmit} className="mt-4 space-y-3 text-left sm:space-y-4">
               <div>
                 <label
                   htmlFor="gb-name"
-                  className="mb-1.5 block font-serif-elegant text-xs uppercase tracking-[0.2em] text-cream/70"
+                  className="mb-1 block font-serif-elegant text-xs uppercase tracking-[0.2em] text-cream/70 sm:mb-1.5"
                 >
                   Votre nom
                 </label>
@@ -706,14 +719,14 @@ function GuestbookScene({ seed }: { seed: number }) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ex : Famille Kouassi"
-                  className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-cream placeholder:text-cream/40 outline-none backdrop-blur-sm transition-colors focus:border-gold/70"
+                  className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-cream placeholder:text-cream/40 outline-none backdrop-blur-sm transition-colors focus:border-gold/70 sm:py-3"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="gb-message"
-                  className="mb-1.5 block font-serif-elegant text-xs uppercase tracking-[0.2em] text-cream/70"
+                  className="mb-1 block font-serif-elegant text-xs uppercase tracking-[0.2em] text-cream/70 sm:mb-1.5"
                 >
                   Votre message
                 </label>
@@ -724,42 +737,66 @@ function GuestbookScene({ seed }: { seed: number }) {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Vos vœux, un souvenir, un mot doux…"
-                  className="w-full resize-none rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-cream placeholder:text-cream/40 outline-none backdrop-blur-sm transition-colors focus:border-gold/70"
+                  className="w-full resize-none rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-cream placeholder:text-cream/40 outline-none backdrop-blur-sm transition-colors focus:border-gold/70 sm:py-3"
                 />
               </div>
 
-              <label
-                htmlFor="gb-photo"
-                className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-gold/40 bg-white/5 px-4 py-3 text-cream/80 transition-colors hover:border-gold/70 hover:bg-white/10"
-              >
-                {preview ? (
-                  <span className="relative size-12 shrink-0 overflow-hidden rounded-lg ring-1 ring-white/20">
-                    {/* aperçu local (blob) — next/image non requis ici */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={preview}
-                      alt="Aperçu"
-                      className="size-full object-cover"
-                    />
-                  </span>
-                ) : (
-                  <ImagePlus className="size-5 shrink-0 text-gold" />
-                )}
-                <span className="truncate font-serif-elegant text-sm">
-                  {fileName ?? "Ajouter une photo"}
+              <div>
+                <span className="mb-1 block font-serif-elegant text-xs uppercase tracking-[0.2em] text-cream/70 sm:mb-1.5">
+                  Votre photo
                 </span>
+                {/* champ fichier unique, images uniquement */}
                 <input
+                  ref={fileRef}
                   id="gb-photo"
                   type="file"
                   accept="image/*"
                   onChange={onPhoto}
                   className="hidden"
                 />
-              </label>
+                {preview ? (
+                  <div className="flex items-center gap-3 rounded-xl border border-gold/40 bg-white/10 p-2 backdrop-blur-sm sm:p-2.5">
+                    <span className="relative size-11 shrink-0 overflow-hidden rounded-lg ring-1 ring-white/20 sm:size-14">
+                      {/* aperçu local (blob) — next/image non requis ici */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={preview}
+                        alt="Aperçu de votre photo"
+                        className="size-full object-cover"
+                      />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="flex items-center gap-1.5 font-serif-elegant text-sm text-gold">
+                        <Check className="size-4 shrink-0" />
+                        Photo ajoutée
+                      </p>
+                      <p className="truncate text-xs text-cream/60">{fileName}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removePhoto}
+                      aria-label="Retirer la photo"
+                      className="shrink-0 rounded-full p-1.5 text-cream/60 transition-colors hover:bg-white/10 hover:text-cream"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label
+                    htmlFor="gb-photo"
+                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-gold/40 bg-white/5 px-4 py-2 text-cream/80 transition-colors hover:border-gold/70 hover:bg-white/10 sm:py-3"
+                  >
+                    <ImagePlus className="size-5 shrink-0 text-gold" />
+                    <span className="font-serif-elegant text-sm">
+                      Ajouter une photo
+                    </span>
+                  </label>
+                )}
+              </div>
 
               <button
                 type="submit"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3 font-display text-base font-medium text-marine-deep shadow-lg shadow-black/30 transition-transform hover:scale-[1.02] active:scale-95"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gold px-6 py-2.5 font-display text-base font-medium text-marine-deep shadow-lg shadow-black/30 transition-transform hover:scale-[1.02] active:scale-95 sm:py-3"
               >
                 <Send className="size-4" />
                 Envoyer
