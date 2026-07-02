@@ -95,7 +95,7 @@ export default function MusicPlayer() {
 
   return (
     <div className="fixed bottom-5 right-5 z-50 print:hidden">
-      <audio ref={audioRef} src={MUSIC} preload="auto" />
+      <audio id="bg-music" ref={audioRef} src={MUSIC} preload="auto" />
       <button
         type="button"
         onClick={toggle}

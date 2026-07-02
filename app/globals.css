@@ -448,6 +448,16 @@ html.cine-snap body {
   background: var(--marine-deep);
 }
 
+/* Défilement verrouillé : l'utilisateur ne peut pas scroller, mais le
+   défilement programmatique (piloté par la musique) fonctionne toujours.
+   (overflow:hidden autorise le scroll par JS, contrairement à clip.) */
+html.cine-locked,
+html.cine-locked body {
+  overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
 /* Background-music button equalizer bars */
 @keyframes eq-bounce {
   0%,

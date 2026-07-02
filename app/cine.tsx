@@ -10,7 +10,6 @@ import {
   type Variants,
 } from "motion/react";
 import {
-  ChevronDown,
   Heart,
   CalendarDays,
   MapPin,
@@ -18,6 +17,7 @@ import {
   Send,
   Check,
   X,
+  Volume2,
 } from "lucide-react";
 
 import {
@@ -50,10 +50,6 @@ const BOKEH = [
 
 /* show a couple of photos per scene so each one stays small & crisp */
 const GROUP = 2;
-
-/* durée d'affichage de chaque niveau avant le défilement automatique (ms).
-   Réglable ici : 10 000 ms ≈ 10 secondes par niveau. */
-const SCENE_DURATION_MS = 10_000;
 
 type PhotoItem = { photo: Photo; n: number };
 type Scene =
@@ -106,6 +102,95 @@ function Ornament({ className = "" }: { className?: string }) {
   );
 }
 
+/* ---------- progression « status » synchronisée sur la musique ---------- */
+function formatClock(sec: number) {
+  const s = Math.max(0, Math.round(sec));
+  const m = Math.floor(s / 60);
+  return `${m}:${(s % 60).toString().padStart(2, "0")}`;
+}
+
+/* Lit l'audio de fond (#bg-music) et, à mesure que la piste avance :
+   - remplit une barre segmentée (un segment par niveau, façon status WhatsApp),
+   - fait défiler jusqu'au niveau correspondant (dernier niveau = fin de piste),
+   - affiche un décompte du temps restant. */
+function StoryProgress({ count, reduced }: { count: number; reduced: boolean }) {
+  const [active, setActive] = useState(0);
+  const [intra, setIntra] = useState(0);
+  const [remaining, setRemaining] = useState<number | null>(null);
+
+  useEffect(() => {
+    const audio = document.getElementById("bg-music") as HTMLAudioElement | null;
+    if (!audio) return;
+    let lastIdx = 0;
+
+    const onTime = () => {
+      const d = audio.duration;
+      if (!d || Number.isNaN(d) || !Number.isFinite(d)) return;
+      const p = Math.min(1, audio.currentTime / d);
+      const seg = Math.min(count - 1, Math.floor(p * count));
+      setActive(seg);
+      setIntra(Math.min(1, p * count - seg));
+      setRemaining(Math.max(0, d - audio.currentTime));
+      if (!reduced && seg > lastIdx) {
+        lastIdx = seg;
+        window.scrollTo({ top: seg * window.innerHeight, behavior: "smooth" });
+      }
+    };
+    const onMeta = () =>
+      setRemaining(Number.isFinite(audio.duration) ? audio.duration : null);
+
+    audio.addEventListener("timeupdate", onTime);
+    audio.addEventListener("loadedmetadata", onMeta);
+    audio.addEventListener("durationchange", onMeta);
+    onMeta();
+    return () => {
+      audio.removeEventListener("timeupdate", onTime);
+      audio.removeEventListener("loadedmetadata", onMeta);
+      audio.removeEventListener("durationchange", onMeta);
+    };
+  }, [count, reduced]);
+
+  /* verrou total : l'utilisateur ne peut pas scroller pendant la lecture.
+     Seul le défilement programmatique (piloté par la musique) bouge la page.
+     On déverrouille une fois arrivé au dernier niveau (le message), pour que
+     le formulaire reste utilisable. */
+  useEffect(() => {
+    const root = document.documentElement;
+    const atEnd = active >= count - 1;
+    root.classList.toggle("cine-locked", !atEnd);
+    return () => root.classList.remove("cine-locked");
+  }, [active, count]);
+
+  return (
+    <>
+      {/* segments façon status WhatsApp */}
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-40 flex gap-1 px-3 pt-3">
+        {Array.from({ length: count }).map((_, i) => (
+          <span
+            key={i}
+            className="h-[3px] flex-1 overflow-hidden rounded-full bg-white/25"
+          >
+            <span
+              className="block h-full rounded-full bg-gold"
+              style={{
+                width:
+                  i < active ? "100%" : i === active ? `${intra * 100}%` : "0%",
+                transition: "width 180ms linear",
+              }}
+            />
+          </span>
+        ))}
+      </div>
+      {/* décompte, façon minuteur de film */}
+      {remaining !== null && (
+        <div className="pointer-events-none fixed right-3 top-5 z-40 font-mono text-[11px] tracking-[0.25em] text-cream/70 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
+          -{formatClock(remaining)}
+        </div>
+      )}
+    </>
+  );
+}
+
 /* ============================================================ */
 export default function Cine() {
   const scenes = useMemo(() => buildScenes(), []);
@@ -113,50 +198,21 @@ export default function Cine() {
 
   useEffect(() => {
     document.documentElement.classList.add("cine-snap");
-    return () => document.documentElement.classList.remove("cine-snap");
-  }, []);
-
-  /* défilement automatique : il ne démarre qu'au PREMIER défilement (geste)
-     de l'utilisateur — ce vrai geste débloque aussi la musique. Ensuite on
-     avance d'un niveau toutes les SCENE_DURATION_MS et on s'arrête sur le
-     dernier niveau. Respecte la préférence « réduire les animations ». */
-  useEffect(() => {
-    if (reduced) return;
-    let intervalId: number | undefined;
-
-    const gestures = ["wheel", "touchstart", "keydown", "pointerdown"];
-    const stopListening = () =>
-      gestures.forEach((e) => window.removeEventListener(e, startAuto));
-
-    const advance = () => {
-      const h = window.innerHeight;
-      const current = Math.round(window.scrollY / h);
-      const next = current + 1;
-      if (next >= scenes.length) {
-        if (intervalId) window.clearInterval(intervalId);
-        return;
-      }
-      window.scrollTo({ top: next * h, behavior: "smooth" });
-    };
-
-    const startAuto = () => {
-      if (intervalId) return;
-      stopListening();
-      intervalId = window.setInterval(advance, SCENE_DURATION_MS);
-    };
-
-    gestures.forEach((e) =>
-      window.addEventListener(e, startAuto, { passive: true }),
-    );
-
+    // à l'actualisation, on repart toujours du tout début
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    window.scrollTo(0, 0);
     return () => {
-      stopListening();
-      if (intervalId) window.clearInterval(intervalId);
+      document.documentElement.classList.remove("cine-snap");
+      if ("scrollRestoration" in history) history.scrollRestoration = "auto";
     };
-  }, [reduced, scenes.length]);
+  }, []);
 
   return (
     <div className="relative text-cream">
+      {/* barre de progression segmentée + décompte, calés sur la musique :
+         le diaporama avance au rythme de la piste et arrive au dernier niveau
+         (le message) pile à la fin de la musique. */}
+      <StoryProgress count={scenes.length} reduced={!!reduced} />
       {/* fixed cinematic overlays above every scene */}
       {/* <div className="pointer-events-none fixed inset-0 z-40">
         <div className="film-grain absolute inset-0" />
@@ -173,10 +229,10 @@ export default function Cine() {
           <SceneView scene={sc} seed={i} />
           {i === 0 && (
             <div className="pointer-events-none absolute bottom-[7vh] left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-1 text-cream/70">
+              <Volume2 className="size-5 animate-pulse" />
               <span className="font-serif-elegant text-xs uppercase tracking-[0.3em]">
-                Faites défiler
+                Touchez pour le son
               </span>
-              <ChevronDown className="animate-scroll-bob size-5" />
             </div>
           )}
         </section>
@@ -465,17 +521,17 @@ function StoryText({
       className="w-full max-w-md text-center sm:max-w-[21rem] sm:text-left"
     >
       <div
-        className="mx-auto mb-6 h-[2px] w-16 rounded-full sm:mx-0"
+        className="mx-auto mb-4 h-[2px] w-16 rounded-full sm:mx-0 sm:mb-6"
         style={{
           background: `linear-gradient(to right, transparent, ${accentVar}, transparent)`,
           boxShadow: `0 0 16px 1px color-mix(in oklch, ${accentVar} 55%, transparent)`,
         }}
       />
-      <div className="space-y-5">
+      <div className="space-y-3 sm:space-y-5">
         {items.map((it) => (
           <p
             key={it.photo.file}
-            className="font-display text-2xl font-medium leading-snug text-cream drop-shadow-[0_2px_14px_rgba(0,0,0,0.6)] sm:text-[1.95rem]"
+            className="font-display text-xl font-medium leading-snug text-cream drop-shadow-[0_2px_14px_rgba(0,0,0,0.6)] sm:text-[1.95rem]"
           >
             {it.photo.caption}.
           </p>
@@ -501,9 +557,9 @@ function PhotosScene({
   const bigFirst = seed % 2 === 0;
   const textSide = seed % 2 === 0;
 
-  const soloClass = "h-[50vh] max-w-[86vw] sm:h-[72vh] sm:max-w-[44vw]";
-  const bigClass = "h-[40vh] max-w-[52vw] sm:h-[62vh] sm:max-w-[34vw]";
-  const smallClass = "h-[28vh] max-w-[40vw] sm:h-[44vh] sm:max-w-[26vw]";
+  const soloClass = "h-[58vh] max-w-[90vw] sm:h-[72vh] sm:max-w-[44vw]";
+  const bigClass = "h-[48vh] max-w-[60vw] sm:h-[62vh] sm:max-w-[34vw]";
+  const smallClass = "h-[34vh] max-w-[46vw] sm:h-[44vh] sm:max-w-[26vw]";
 
   return (
     <div className="relative flex h-full w-full items-center justify-center px-4">
@@ -514,7 +570,7 @@ function PhotosScene({
         initial="hidden"
         whileInView="visible"
         viewport={VIEWPORT}
-        className={`relative flex w-full max-w-6xl items-center justify-center gap-8 sm:gap-14 ${
+        className={`relative flex w-full max-w-6xl items-center justify-center gap-5 sm:gap-14 ${
           textSide ? "flex-col-reverse sm:flex-row" : "flex-col-reverse sm:flex-row-reverse"
         }`}
       >
@@ -526,10 +582,10 @@ function PhotosScene({
             const isBig = solo || (bigFirst ? k === 0 : k === 1);
             const sizeClass = solo ? soloClass : isBig ? bigClass : smallClass;
             const sizes = solo
-              ? "(max-width: 768px) 86vw, 44vw"
+              ? "(max-width: 768px) 90vw, 44vw"
               : isBig
-                ? "(max-width: 768px) 52vw, 34vw"
-                : "(max-width: 768px) 40vw, 26vw";
+                ? "(max-width: 768px) 60vw, 34vw"
+                : "(max-width: 768px) 46vw, 26vw";
             return (
               <StillPhoto
                 key={it.photo.file}
@@ -664,12 +720,12 @@ function SeamMotif() {
       {/* desktop : séparation verticale au centre */}
       <div className="pointer-events-none absolute inset-y-0 left-1/2 z-20 hidden -translate-x-1/2 flex-col items-center justify-center sm:flex">
         <span className="absolute inset-y-0 w-px" style={{ background: line("v") }} />
-        <SeamMedallion />
+        {/* <SeamMedallion /> */}
       </div>
       {/* mobile : séparation horizontale au niveau de la couture (≈ 34vh) */}
       <div className="pointer-events-none absolute inset-x-0 top-[34vh] z-20 flex -translate-y-1/2 items-center justify-center sm:hidden">
         <span className="absolute inset-x-0 h-px" style={{ background: line("h") }} />
-        <SeamMedallion />
+        {/* <SeamMedallion /> */}
       </div>
     </>
   );
