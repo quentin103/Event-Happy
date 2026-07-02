@@ -33,10 +33,40 @@ RUN npm run build
 FROM base AS runner
 
 # Valeurs par défaut NON secrètes (Railway peut les surcharger dans le service).
+# DATA_DIR DOIT être ABSOLU et correspondre au point de montage du volume Railway
+# (ex. /data → images dans /data/uploads). Un chemin relatif ("./data") écrit
+# dans le conteneur éphémère et provoque l'erreur EACCES : à ne pas faire.
 # Les secrets/URL (DATABASE_URL, DATABASE_SSL, MAX_UPLOAD_MB…) proviennent des
 # variables Railway au runtime, PAS de l'image.
-ENV DATA_DIR="./data"
+ENV NODE_ENV=production \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0 \
+    DATA_DIR=/data
 
+# Utilisateur non-root
+RUN addgroup --system --gid 1001 nodejs \
+ && adduser --system --uid 1001 nextjs
+
+# Répertoire des images (le volume Railway est monté ici au runtime ;
+# les droits réels sont réappliqués au démarrage par l'entrypoint).
+RUN mkdir -p /data/uploads && chown -R nextjs:nodejs /data
+
+# Assets publics
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+
+# Application autonome (standalone) — contient server.js
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Client Prisma + moteur de requêtes (indispensables au runtime ; PAS la CLI ni
+# les migrations — celles-ci se poussent séparément via `npm run db:migrate`).
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma/client ./node_modules/@prisma/client
+
+# Entrypoint : démarre en root, corrige les droits du volume, puis lance le
+# serveur en tant qu'utilisateur non-root (su-exec).
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 3000
 
