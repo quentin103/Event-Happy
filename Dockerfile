@@ -1,52 +1,66 @@
 # syntax=docker/dockerfile:1
 
-##########  Image de base commune  ##########
-FROM node:22-bookworm-slim AS base
+##########  Base commune (Alpine + libs pour Prisma)  ##########
+FROM node:22-alpine AS base
+# openssl : requis par le moteur Prisma ; libc6-compat : binaires natifs sur musl
+RUN apk add --no-cache libc6-compat openssl
 ENV NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app
 
-##########  Dépendances  ##########
-# prisma/ est copié car le postinstall lance `prisma generate`.
+##########  1. Dépendances  ##########
 FROM base AS deps
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json* ./
+# prisma/ nécessaire : le postinstall lance `prisma generate`
 COPY prisma ./prisma
 RUN npm ci
 
-##########  Build  ##########
+##########  2. Build  ##########
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# Produit .next/standalone (serveur minimal) grâce à output: "standalone"
+
+# --- Variables de BUILD ---
+# Seules les variables NEXT_PUBLIC_* doivent être présentes au build (Next les
+# inline dans le bundle client). Ce projet n'en a AUCUNE, donc rien à passer ici.
+# Les variables serveur (DATABASE_URL, DATA_DIR, MAX_UPLOAD_MB, DATABASE_SSL…)
+# sont lues à l'EXÉCUTION : ne pas les mettre ici (et ne jamais graver de secret
+# dans une image). Exemple si un jour tu ajoutes une variable publique :
+#   ARG NEXT_PUBLIC_SITE_URL
+#   ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 RUN npm run build
 
-##########  Image d'exécution (épurée)  ##########
-# Contient l'app + le client Prisma (moteur de requêtes) UNIQUEMENT.
-# Aucun outillage base de données : ni CLI Prisma, ni schéma, ni migrations.
-# Les migrations se poussent séparément (voir README / `npm run db:migrate`).
+##########  3. Production (image épurée : app + client Prisma)  ##########
 FROM base AS runner
+
+# Valeurs par défaut NON secrètes (Railway peut les surcharger dans le service).
+# Les secrets/URL (DATABASE_URL, DATABASE_SSL, MAX_UPLOAD_MB…) proviennent des
+# variables Railway au runtime, PAS de l'image.
 ENV NODE_ENV=production \
     PORT=3000 \
     HOSTNAME=0.0.0.0 \
     DATA_DIR=/data
 
-# Répertoire des images (volume), accessible en écriture par "node".
-RUN mkdir -p /data/uploads && chown -R node:node /data
+# Utilisateur non-root
+RUN addgroup --system --gid 1001 nodejs \
+ && adduser --system --uid 1001 nextjs
 
-# Application autonome
-COPY --from=builder --chown=node:node /app/.next/standalone ./
-COPY --from=builder --chown=node:node /app/.next/static ./.next/static
-COPY --from=builder --chown=node:node /app/public ./public
+# Répertoire des images (Railway monte un volume sur /data/uploads)
+RUN mkdir -p /data/uploads && chown -R nextjs:nodejs /data
 
-# Client Prisma + moteur de requêtes (indispensables à l'exécution).
-COPY --from=builder --chown=node:node /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=node:node /app/node_modules/@prisma/client ./node_modules/@prisma/client
-# on retire le moteur macOS inutile dans une image Linux
-RUN rm -f node_modules/.prisma/client/libquery_engine-darwin-arm64.dylib.node
+# Assets publics
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-USER node
+# Application autonome (standalone)
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Client Prisma + moteur de requêtes (indispensables au runtime ; PAS la CLI ni
+# les migrations — celles-ci se poussent séparément via `npm run db:migrate`).
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma/client ./node_modules/@prisma/client
+
+USER nextjs
 EXPOSE 3000
 
-# Pas de VOLUME : Railway rejette l'instruction et monte déjà un volume sur
-# /data/uploads (DATA_DIR=/data → images écrites dans /data/uploads).
-
+# Pas de VOLUME : Railway rejette l'instruction et monte déjà le volume.
 CMD ["node", "server.js"]
