@@ -24,7 +24,8 @@ import {
   chapters,
   src,
   ASPECT,
-  HERO_PHOTO,
+  HERO_PHOTO_MOBILE,
+  HERO_PHOTO_DESKTOP,
   GUESTBOOK_PHOTO,
   type Chapter,
   type Photo,
@@ -327,7 +328,23 @@ function SceneView({ scene, seed }: { scene: Scene; seed: number }) {
   return <CreditsScene seed={seed} />;
 }
 
+/* vrai en dessous de 768px (mobile) — tablette & desktop = false.
+   Rendu SSR par défaut = desktop, corrigé au montage (évite tout décalage
+   d'hydratation), puis mis à jour à chaque changement de taille d'écran. */
+function useIsMobile(query = "(max-width: 767px)") {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+    const onChange = () => setIsMobile(mql.matches);
+    onChange();
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, [query]);
+  return isMobile;
+}
+
 function TitleScene() {
+  const isMobile = useIsMobile();
   const reduced = useReducedMotion();
   const mx = useSpring(0, { stiffness: 60, damping: 18 });
   const my = useSpring(0, { stiffness: 60, damping: 18 });
@@ -344,15 +361,38 @@ function TitleScene() {
       className="relative flex h-full w-full flex-col items-center justify-center px-6 text-center"
     >
       <motion.div className=" absolute inset-0" >
-        <div className="absolute inset-[-6%]">
-          <Image
-            src={src(HERO_PHOTO)}
-            alt="Lyce Andréa & Joseph"
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-[center_28%]"
-          />
+        {/* pas de zoom sur mobile (le -6% ne sert qu'au parallaxe souris) */}
+        <div className="absolute inset-0 sm:inset-[-6%]">
+          {/* desktop / tablette — fond en fondu selon la taille d'écran */}
+          <motion.div
+            className="absolute inset-0"
+            animate={{ opacity: isMobile ? 0 : 1 }}
+            transition={{ duration: 0.7, ease: EASE }}
+          >
+            <Image
+              src={src(HERO_PHOTO_DESKTOP)}
+              alt="Lyce Andréa & Joseph"
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover object-[center_28%]"
+            />
+          </motion.div>
+          {/* mobile */}
+          <motion.div
+            className="absolute inset-0"
+            animate={{ opacity: isMobile ? 1 : 0 }}
+            transition={{ duration: 0.7, ease: EASE }}
+          >
+            <Image
+              src={src(HERO_PHOTO_MOBILE)}
+              alt="Lyce Andréa & Joseph"
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover object-center"
+            />
+          </motion.div>
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/55 to-black/90" />
       </motion.div>

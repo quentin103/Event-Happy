@@ -21,9 +21,11 @@ export type Chapter = {
 
 const BASE = "/photo/";
 
-/** Couverture / photo d'accueil (héros). */
-export const HERO_PHOTO =
-  "couverture/WhatsApp Image 2026-06-19 at 16.52.02 (1).jpeg";
+/** Couverture / photo d'accueil (héros) — une version par format d'écran. */
+export const HERO_PHOTO_MOBILE = "couverture/home.jpg";
+export const HERO_PHOTO_DESKTOP = "couverture/home.jpeg";
+/** défaut (desktop) — conservé pour compatibilité */
+export const HERO_PHOTO = HERO_PHOTO_DESKTOP;
 
 /** Photo de clôture, à côté du livre d'or (section « merci aux invités »). */
 export const GUESTBOOK_PHOTO = "A la fin.jpeg";
