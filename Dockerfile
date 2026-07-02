@@ -35,7 +35,7 @@ FROM base AS runner
 # Valeurs par défaut NON secrètes (Railway peut les surcharger dans le service).
 # Les secrets/URL (DATABASE_URL, DATABASE_SSL, MAX_UPLOAD_MB…) proviennent des
 # variables Railway au runtime, PAS de l'image.
-ENV DATA_DIRE=/app/uploads
+ENV DATA_DIR="./data"
 
 
 EXPOSE 3000
