@@ -2,8 +2,8 @@
 
 ##########  Base commune (Alpine + libs pour Prisma)  ##########
 FROM node:22-alpine AS base
-# openssl : requis par le moteur Prisma ; libc6-compat : binaires natifs sur musl
-RUN apk add --no-cache libc6-compat openssl
+# openssl + libc6-compat : moteur Prisma ; su-exec : drop de privilèges à l'entrée
+RUN apk add --no-cache libc6-compat openssl su-exec
 ENV NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app
 
@@ -35,32 +35,12 @@ FROM base AS runner
 # Valeurs par défaut NON secrètes (Railway peut les surcharger dans le service).
 # Les secrets/URL (DATABASE_URL, DATABASE_SSL, MAX_UPLOAD_MB…) proviennent des
 # variables Railway au runtime, PAS de l'image.
-ENV NODE_ENV=production \
-    PORT=3000 \
-    HOSTNAME=0.0.0.0 \
-    DATA_DIR=/data
+ENV DATA_DIRE=/app/uploads
 
-# Utilisateur non-root
-RUN addgroup --system --gid 1001 nodejs \
- && adduser --system --uid 1001 nextjs
 
-# Répertoire des images (Railway monte un volume sur /data/uploads)
-RUN mkdir -p /data/uploads && chown -R nextjs:nodejs /data
-
-# Assets publics
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-
-# Application autonome (standalone)
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-# Client Prisma + moteur de requêtes (indispensables au runtime ; PAS la CLI ni
-# les migrations — celles-ci se poussent séparément via `npm run db:migrate`).
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma/client ./node_modules/@prisma/client
-
-USER nextjs
 EXPOSE 3000
 
 # Pas de VOLUME : Railway rejette l'instruction et monte déjà le volume.
+# Pas de `USER` ici : l'entrypoint tourne en root puis bascule sur "nextjs".
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "server.js"]

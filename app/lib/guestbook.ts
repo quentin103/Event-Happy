@@ -11,11 +11,18 @@ import { PrismaClient } from "@prisma/client";
    pas créé à la volée. Connexion : variable DATABASE_URL.
 --------------------------------------------------------------------------- */
 
-/* ---------- répertoire des uploads (volume) ---------- */
-export const DATA_DIR =
-  process.env.DATA_DIR || path.join(process.cwd(), "data");
-export const UPLOADS_DIR =
-  process.env.UPLOADS_DIR || path.join(DATA_DIR, "uploads");
+/* ---------- répertoire des uploads (volume) ----------
+   On force un chemin ABSOLU : si DATA_DIR est relatif (ex. mauvaise variable
+   Railway), on évite d'écrire au hasard dans le conteneur au lieu du volume. */
+export const DATA_DIR = path.resolve(
+  process.env.DATA_DIR || path.join(process.cwd(), "data"),
+);
+export const UPLOADS_DIR = path.resolve(
+  process.env.UPLOADS_DIR || path.join(DATA_DIR, "uploads"),
+);
+
+// visible dans les logs Railway pour vérifier où atterrissent les images
+console.log(`[guestbook] dossier des images : ${UPLOADS_DIR}`);
 
 /* ---------- limites ---------- */
 export const MAX_UPLOAD_BYTES =
