@@ -20,6 +20,9 @@
 # production
 /build
 
+# données locales du livre d'or (base SQLite + images envoyées)
+/data
+
 # misc
 .DS_Store
 *.pem

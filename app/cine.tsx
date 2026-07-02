@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   motion,
@@ -114,22 +115,43 @@ export default function Cine() {
     return () => document.documentElement.classList.remove("cine-snap");
   }, []);
 
-  /* défilement automatique : on avance d'un niveau toutes les
-     SCENE_DURATION_MS et on s'arrête sur le dernier niveau (générique).
-     Respecte la préférence « réduire les animations ». */
+  /* défilement automatique : il ne démarre qu'au PREMIER défilement (geste)
+     de l'utilisateur — ce vrai geste débloque aussi la musique. Ensuite on
+     avance d'un niveau toutes les SCENE_DURATION_MS et on s'arrête sur le
+     dernier niveau. Respecte la préférence « réduire les animations ». */
   useEffect(() => {
     if (reduced) return;
-    const id = window.setInterval(() => {
+    let intervalId: number | undefined;
+
+    const gestures = ["wheel", "touchstart", "keydown", "pointerdown"];
+    const stopListening = () =>
+      gestures.forEach((e) => window.removeEventListener(e, startAuto));
+
+    const advance = () => {
       const h = window.innerHeight;
       const current = Math.round(window.scrollY / h);
       const next = current + 1;
       if (next >= scenes.length) {
-        window.clearInterval(id);
+        if (intervalId) window.clearInterval(intervalId);
         return;
       }
       window.scrollTo({ top: next * h, behavior: "smooth" });
-    }, SCENE_DURATION_MS);
-    return () => window.clearInterval(id);
+    };
+
+    const startAuto = () => {
+      if (intervalId) return;
+      stopListening();
+      intervalId = window.setInterval(advance, SCENE_DURATION_MS);
+    };
+
+    gestures.forEach((e) =>
+      window.addEventListener(e, startAuto, { passive: true }),
+    );
+
+    return () => {
+      stopListening();
+      if (intervalId) window.clearInterval(intervalId);
+    };
   }, [reduced, scenes.length]);
 
   return (
@@ -144,6 +166,7 @@ export default function Cine() {
       {scenes.map((sc, i) => (
         <section
           key={i}
+          id={sc.kind === "guestbook" ? "livre-d-or" : undefined}
           className="relative h-svh w-full snap-start snap-always overflow-hidden"
         >
           <SceneView scene={sc} seed={i} />
@@ -619,6 +642,8 @@ function GuestbookScene({ seed }: { seed: number }) {
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const onPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -645,10 +670,34 @@ function GuestbookScene({ seed }: { seed: number }) {
     if (fileRef.current) fileRef.current.value = "";
   };
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // UI seulement pour l'instant : aucun envoi réel, juste un remerciement.
-    setSent(true);
+    if (submitting) return;
+    const file = fileRef.current?.files?.[0];
+    if (!file) {
+      setError("Ajoutez une photo pour laisser votre souvenir.");
+      return;
+    }
+    setError(null);
+    setSubmitting(true);
+    try {
+      const fd = new FormData();
+      fd.append("name", name.trim());
+      fd.append("comment", message.trim());
+      fd.append("photo", file);
+      const res = await fetch("/api/guestbook", { method: "POST", body: fd });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        throw new Error(data.error ?? "Envoi impossible, réessayez.");
+      }
+      setSent(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Envoi impossible, réessayez.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -700,7 +749,7 @@ function GuestbookScene({ seed }: { seed: number }) {
               <p className="font-display text-xl text-cream">
                 Merci{name ? `, ${name}` : ""}&nbsp;!
               </p>
-              <p className="font-serif-elegant text-sm text-cream/80">
+              <p className="text-sm text-cream/80">
                 Votre message nous touche droit au cœur.
               </p>
             </div>
@@ -709,7 +758,7 @@ function GuestbookScene({ seed }: { seed: number }) {
               <div>
                 <label
                   htmlFor="gb-name"
-                  className="mb-1 block font-serif-elegant text-xs uppercase tracking-[0.2em] text-cream/70 sm:mb-1.5"
+                  className="mb-1 block  text-xs uppercase tracking-[0.2em] text-cream/70 sm:mb-1.5"
                 >
                   Votre nom
                 </label>
@@ -718,7 +767,7 @@ function GuestbookScene({ seed }: { seed: number }) {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Ex : Famille Kouassi"
+                  placeholder="Ex : Lyce, Joseph, ou vos prénoms"
                   className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-cream placeholder:text-cream/40 outline-none backdrop-blur-sm transition-colors focus:border-gold/70 sm:py-3"
                 />
               </div>
@@ -726,7 +775,7 @@ function GuestbookScene({ seed }: { seed: number }) {
               <div>
                 <label
                   htmlFor="gb-message"
-                  className="mb-1 block font-serif-elegant text-xs uppercase tracking-[0.2em] text-cream/70 sm:mb-1.5"
+                  className="mb-1 block text-xs uppercase tracking-[0.2em] text-cream/70 sm:mb-1.5"
                 >
                   Votre message
                 </label>
@@ -742,7 +791,7 @@ function GuestbookScene({ seed }: { seed: number }) {
               </div>
 
               <div>
-                <span className="mb-1 block font-serif-elegant text-xs uppercase tracking-[0.2em] text-cream/70 sm:mb-1.5">
+                <span className="mb-1 block text-xs uppercase tracking-[0.2em] text-cream/70 sm:mb-1.5">
                   Votre photo
                 </span>
                 {/* champ fichier unique, images uniquement */}
@@ -794,12 +843,19 @@ function GuestbookScene({ seed }: { seed: number }) {
                 )}
               </div>
 
+              {error && (
+                <p className="text-center text-sm text-wed-orange sm:text-left">
+                  {error}
+                </p>
+              )}
+
               <button
                 type="submit"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gold px-6 py-2.5 font-display text-base font-medium text-marine-deep shadow-lg shadow-black/30 transition-transform hover:scale-[1.02] active:scale-95 sm:py-3"
+                disabled={submitting}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gold px-6 py-2.5 font-display text-base font-medium text-marine-deep shadow-lg shadow-black/30 transition-transform hover:scale-[1.02] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 sm:py-3"
               >
                 <Send className="size-4" />
-                Envoyer
+                {submitting ? "Envoi…" : "Envoyer"}
               </button>
             </form>
           )}

@@ -11,77 +11,100 @@ const MUSIC =
 
 export default function MusicPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [soundOn, setSoundOn] = useState(false);
 
-  /* Background music: browsers block autoplay-with-sound until the user
-     interacts, so we start the track on the very first gesture (scroll,
-     tap, click or key). Once it has played, we stop listening so a manual
-     pause sticks. */
+  /* Chrome ne considère pas le défilement (wheel/scroll) comme un geste qui
+     débloque le son : seul un clic/tap/touche le ferait. On contourne ça en
+     lançant la piste EN MUET dès le chargement (l'autoplay muet est autorisé),
+     puis on active le son au tout premier geste — y compris le défilement.
+     Comme l'élément joue déjà, le démutage produit du son sans clic. */
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
+    a.muted = true;
     a.volume = 0.55;
+    a.play().catch(() => {
+      /* certains navigateurs refusent même l'autoplay muet : le premier
+         geste ci-dessous relancera la lecture, son compris. */
+    });
 
-    let armed = true;
-    const events = ["pointerdown", "keydown", "wheel", "scroll", "touchstart"];
-    const cleanup = () =>
-      events.forEach((e) => window.removeEventListener(e, start));
-
-    const start = () => {
-      if (!armed) return;
-      a.play()
+    let done = false;
+    const events = [
+      "pointerdown",
+      "keydown",
+      "wheel",
+      "scroll",
+      "touchstart",
+      "click",
+    ];
+    const unmute = () => {
+      if (done) return;
+      const el = audioRef.current;
+      if (!el) return;
+      el.muted = false;
+      el.volume = 0.55;
+      el
+        .play()
         .then(() => {
-          armed = false;
+          done = true;
+          setSoundOn(true);
           cleanup();
         })
         .catch(() => {
-          /* still blocked — keep waiting for a stronger gesture */
+          /* encore bloqué — on attend un geste plus fort (clic/tap) */
         });
     };
+    const cleanup = () =>
+      events.forEach((e) => window.removeEventListener(e, unmute));
 
     events.forEach((e) =>
-      window.addEventListener(e, start, { passive: true }),
+      window.addEventListener(e, unmute, { passive: true }),
     );
     return cleanup;
   }, []);
 
-  /* keep button state in sync with the actual audio element */
+  /* le bouton reflète si le son est réellement audible (en lecture & non muet) */
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
-    const onPlay = () => {
-      setPlaying(true);
-      setReady(true);
-    };
-    const onPause = () => setPlaying(false);
-    a.addEventListener("play", onPlay);
-    a.addEventListener("pause", onPause);
+    const sync = () => setSoundOn(!a.paused && !a.muted && !a.ended);
+    a.addEventListener("play", sync);
+    a.addEventListener("pause", sync);
+    a.addEventListener("ended", sync); // la piste est terminée : on s'arrête
+    a.addEventListener("volumechange", sync); // déclenché aussi au changement de muted
     return () => {
-      a.removeEventListener("play", onPlay);
-      a.removeEventListener("pause", onPause);
+      a.removeEventListener("play", sync);
+      a.removeEventListener("pause", sync);
+      a.removeEventListener("ended", sync);
+      a.removeEventListener("volumechange", sync);
     };
   }, []);
 
   const toggle = () => {
     const a = audioRef.current;
     if (!a) return;
-    if (a.paused) a.play().catch(() => {});
-    else a.pause();
+    if (a.paused || a.muted || a.ended) {
+      a.muted = false;
+      // si la piste était finie, on la reprend depuis le début
+      if (a.ended || a.currentTime >= a.duration) a.currentTime = 0;
+      a.play().catch(() => {});
+    } else {
+      a.pause();
+    }
   };
 
   return (
     <div className="fixed bottom-5 right-5 z-50 print:hidden">
-      <audio ref={audioRef} src={MUSIC} loop preload="auto" />
+      <audio ref={audioRef} src={MUSIC} preload="auto" />
       <button
         type="button"
         onClick={toggle}
-        aria-label={playing ? "Mettre la musique en pause" : "Lancer la musique"}
-        aria-pressed={playing}
+        aria-label={soundOn ? "Couper la musique" : "Activer la musique"}
+        aria-pressed={soundOn}
         className="group flex items-center gap-3 rounded-full border border-gold/50 bg-marine-deep/80 py-2.5 pl-2.5 pr-4 text-cream shadow-[0_10px_30px_-10px_rgba(10,12,30,0.7)] backdrop-blur-md transition hover:border-gold hover:bg-marine-deep"
       >
         <span className="flex size-6 items-center justify-center rounded-full bg-gold text-marine-deep transition group-hover:scale-105">
-          {playing ? (
+          {soundOn ? (
             <Pause className="size-3 fill-current" />
           ) : (
             <Play className="size-3 translate-x-px fill-current" />
@@ -89,7 +112,7 @@ export default function MusicPlayer() {
         </span>
 
         {/* animated equalizer while playing, music note otherwise */}
-        {playing ? (
+        {soundOn ? (
           <span className="flex h-4 items-end gap-[3px]" aria-hidden>
             <span className="eq-bar w-[3px] rounded-full bg-gold" />
             <span
@@ -108,10 +131,6 @@ export default function MusicPlayer() {
         ) : (
           <Music2 className="size-4 text-gold" aria-hidden />
         )}
-
-        {/* <span className="text-xs font-medium uppercase tracking-[0.2em] text-cream/85">
-          {playing ? "Musique" : ready ? "Reprendre" : "Écouter"}
-        </span> */}
       </button>
     </div>
   );

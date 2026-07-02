@@ -1,0 +1,24 @@
+// Prisma — schéma de la base Event-Happy
+// Docs : https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Une signature du livre d'or (nom, message, photo, date).
+model GuestbookEntry {
+  id        Int      @id @default(autoincrement())
+  name      String
+  comment   String
+  /// lien public vers l'image servie depuis le volume
+  file      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("guestbook_entries")
+}
