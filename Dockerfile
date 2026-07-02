@@ -45,6 +45,8 @@ RUN rm -f node_modules/.prisma/client/libquery_engine-darwin-arm64.dylib.node
 
 USER node
 EXPOSE 3000
-VOLUME ["/data"]
+
+# Pas de VOLUME : Railway rejette l'instruction et monte déjà un volume sur
+# /data/uploads (DATA_DIR=/data → images écrites dans /data/uploads).
 
 CMD ["node", "server.js"]
