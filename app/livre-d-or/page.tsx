@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Heart, Quote, ArrowLeft, PenLine } from "lucide-react";
 import type { Metadata } from "next";
 
-import { listEntries } from "@/app/lib/guestbook";
+import { listEntries, type GuestbookEntry } from "@/app/lib/guestbook";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,14 @@ function Ornament() {
 }
 
 export default async function LivreDOrPage() {
-  const entries = await listEntries();
+  let entries: GuestbookEntry[] = [];
+  let loadError = false;
+  try {
+    entries = await listEntries();
+  } catch (err) {
+    console.error("[livre-d-or] chargement de la base échoué:", err);
+    loadError = true;
+  }
 
   return (
     <main className="relative min-h-svh overflow-hidden bg-marine-deep text-cream">
@@ -73,7 +80,37 @@ export default async function LivreDOrPage() {
           </div>
         </header>
 
-        {entries.length === 0 ? (
+        {loadError ? (
+          /* erreur : base indisponible / injoignable */
+          <div className="mx-auto flex max-w-md flex-col items-center gap-5 rounded-3xl border border-wed-orange/40 bg-white/5 px-8 py-14 text-center backdrop-blur-sm">
+            <span className="flex size-12 items-center justify-center rounded-full border border-wed-orange/60 font-display text-2xl text-wed-orange">
+              !
+            </span>
+            <p className="font-display text-xl text-cream">
+              Le livre d&apos;or est momentanément indisponible
+            </p>
+            <p className="font-serif-elegant text-sm text-cream/75">
+              Nous n&apos;avons pas pu charger les messages pour l&apos;instant.
+              Merci de réessayer dans un petit moment.
+            </p>
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-4">
+              {/* lien classique = rechargement complet (nouveau rendu serveur) */}
+              <a
+                href="/livre-d-or"
+                className="inline-flex items-center gap-2 rounded-full bg-gold px-6 py-3 font-display text-sm font-medium text-marine-deep transition-transform hover:scale-[1.03]"
+              >
+                Réessayer
+              </a>
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 text-sm text-cream/70 transition-colors hover:text-gold"
+              >
+                <ArrowLeft className="size-4" />
+                Retour à l&apos;accueil
+              </Link>
+            </div>
+          </div>
+        ) : entries.length === 0 ? (
           /* état vide */
           <div className="mx-auto flex max-w-md flex-col items-center gap-5 rounded-3xl border border-gold/25 bg-white/5 px-8 py-14 text-center backdrop-blur-sm">
             <Heart className="size-8 fill-gold text-gold" />
