@@ -9,6 +9,7 @@ import {
   useReducedMotion,
   type Variants,
 } from "motion/react";
+import { gsap } from "gsap";
 import {
   Heart,
   CalendarDays,
@@ -37,6 +38,17 @@ const ACCENT_VAR: Record<Chapter["accent"], string> = {
   "wed-fuchsia": "var(--wed-fuchsia)",
   marine: "var(--marine)",
 };
+
+/* duos issus de la palette officielle : combinés au seed, chaque niveau
+   reçoit un duo + un angle + des intensités propres → fond unique partout */
+const DUOS: [string, string][] = [
+  ["var(--wed-orange)", "var(--wed-fuchsia)"],
+  ["var(--wed-fuchsia)", "var(--gold)"],
+  ["var(--wed-orange)", "var(--gold)"],
+  ["var(--wed-fuchsia)", "var(--bronze)"],
+  ["var(--gold)", "var(--bronze)"],
+  ["var(--bronze)", "var(--wed-orange)"],
+];
 
 /* fixed bokeh field so each backdrop has drifting points of light */
 const BOKEH = [
@@ -110,12 +122,10 @@ function formatClock(sec: number) {
 }
 
 /* Lit l'audio de fond (#bg-music) et, à mesure que la piste avance :
-   - remplit une barre segmentée (un segment par niveau, façon status WhatsApp),
    - fait défiler jusqu'au niveau correspondant (dernier niveau = fin de piste),
    - affiche un décompte du temps restant. */
 function StoryProgress({ count, reduced }: { count: number; reduced: boolean }) {
   const [active, setActive] = useState(0);
-  const [intra, setIntra] = useState(0);
   const [remaining, setRemaining] = useState<number | null>(null);
 
   useEffect(() => {
@@ -129,7 +139,6 @@ function StoryProgress({ count, reduced }: { count: number; reduced: boolean }) 
       const p = Math.min(1, audio.currentTime / d);
       const seg = Math.min(count - 1, Math.floor(p * count));
       setActive(seg);
-      setIntra(Math.min(1, p * count - seg));
       setRemaining(Math.max(0, d - audio.currentTime));
       if (!reduced && seg > lastIdx) {
         lastIdx = seg;
@@ -161,33 +170,12 @@ function StoryProgress({ count, reduced }: { count: number; reduced: boolean }) 
     return () => root.classList.remove("cine-locked");
   }, [active, count]);
 
+  /* décompte, façon minuteur de film */
+  if (remaining === null) return null;
   return (
-    <>
-      {/* segments façon status WhatsApp */}
-      <div className="pointer-events-none fixed inset-x-0 top-0 z-40 flex gap-1 px-3 pt-3">
-        {Array.from({ length: count }).map((_, i) => (
-          <span
-            key={i}
-            className="h-[3px] flex-1 overflow-hidden rounded-full bg-white/25"
-          >
-            <span
-              className="block h-full rounded-full bg-gold"
-              style={{
-                width:
-                  i < active ? "100%" : i === active ? `${intra * 100}%` : "0%",
-                transition: "width 180ms linear",
-              }}
-            />
-          </span>
-        ))}
-      </div>
-      {/* décompte, façon minuteur de film */}
-      {remaining !== null && (
-        <div className="pointer-events-none fixed right-3 top-5 z-40 font-mono text-[11px] tracking-[0.25em] text-cream/70 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
-          -{formatClock(remaining)}
-        </div>
-      )}
-    </>
+    <div className="pointer-events-none fixed right-3 top-5 z-40 font-mono text-[11px] tracking-[0.25em] text-cream/70 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
+      -{formatClock(remaining)}
+    </div>
   );
 }
 
@@ -209,9 +197,9 @@ export default function Cine() {
 
   return (
     <div className="relative text-cream">
-      {/* barre de progression segmentée + décompte, calés sur la musique :
-         le diaporama avance au rythme de la piste et arrive au dernier niveau
-         (le message) pile à la fin de la musique. */}
+      {/* décompte + défilement calés sur la musique : le diaporama avance au
+         rythme de la piste et arrive au dernier niveau (le message) pile à la
+         fin de la musique. */}
       <StoryProgress count={scenes.length} reduced={!!reduced} />
       {/* fixed cinematic overlays above every scene */}
       {/* <div className="pointer-events-none fixed inset-0 z-40">

@@ -22,6 +22,7 @@
   --color-wed-orange: var(--wed-orange);
   --color-wed-fuchsia: var(--wed-fuchsia);
   --color-gold: var(--gold);
+  --color-bronze: var(--bronze);
   --color-cream: var(--cream);
 
   --color-sidebar-ring: var(--sidebar-ring);
@@ -65,12 +66,13 @@
 :root {
   --radius: 0.75rem;
 
-  /* Wedding palette */
-  --marine: oklch(0.32 0.085 264);
-  --marine-deep: oklch(0.22 0.07 266);
-  --wed-orange: oklch(0.7 0.17 47);
-  --wed-fuchsia: oklch(0.58 0.23 350);
-  --gold: oklch(0.78 0.1 78);
+  /* Wedding palette (couleurs officielles de l'événement) */
+  --marine: #192a3c;
+  --marine-deep: #012547;
+  --wed-orange: #ee5f1b;
+  --wed-fuchsia: #d22167;
+  --gold: #fc935a; /* pêche lumineuse — accents & titres */
+  --bronze: #a76d3d; /* bronze — liserés, ornements */
   --cream: oklch(0.98 0.012 78);
 
   --background: oklch(0.985 0.009 78);
@@ -219,9 +221,9 @@
   background-image: linear-gradient(
     100deg,
     var(--gold) 0%,
-    oklch(0.88 0.11 86) 40%,
+    #ffe0c4 40%,
     var(--gold) 60%,
-    oklch(0.7 0.12 70) 100%
+    var(--bronze) 100%
   );
   background-size: 200% auto;
   -webkit-background-clip: text !important;
