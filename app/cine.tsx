@@ -63,6 +63,14 @@ const BOKEH = [
 /* show a couple of photos per scene so each one stays small & crisp */
 const GROUP = 2;
 
+/* ============================================================
+   MODE DÉVELOPPEMENT — mettre à `true` pour naviguer librement :
+   désactive le verrou de scroll, le défilement piloté par la musique,
+   le décompte et le retour forcé au début à l'actualisation.
+   ⚠️ Remettre à `false` avant la mise en ligne.
+   ============================================================ */
+const DEV_SCROLL_LIBRE = true;
+
 type PhotoItem = { photo: Photo; n: number };
 type Scene =
   | { kind: "title" }
@@ -186,6 +194,9 @@ export default function Cine() {
 
   useEffect(() => {
     document.documentElement.classList.add("cine-snap");
+    if (DEV_SCROLL_LIBRE) {
+      return () => document.documentElement.classList.remove("cine-snap");
+    }
     // à l'actualisation, on repart toujours du tout début
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
     window.scrollTo(0, 0);
@@ -199,8 +210,10 @@ export default function Cine() {
     <div className="relative text-cream">
       {/* décompte + défilement calés sur la musique : le diaporama avance au
          rythme de la piste et arrive au dernier niveau (le message) pile à la
-         fin de la musique. */}
-      <StoryProgress count={scenes.length} reduced={!!reduced} />
+         fin de la musique. Désactivé en mode développement (DEV_SCROLL_LIBRE). */}
+      {!DEV_SCROLL_LIBRE && (
+        <StoryProgress count={scenes.length} reduced={!!reduced} />
+      )}
       {/* fixed cinematic overlays above every scene */}
       {/* <div className="pointer-events-none fixed inset-0 z-40">
         <div className="film-grain absolute inset-0" />

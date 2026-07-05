@@ -45,6 +45,7 @@ export const ASPECT: Record<Orientation, string> = {
 };
 
 const D = "WhatsApp Image 2026-06-19 at "; // common filename prefix
+const N = "WhatsApp Image 2026-07-03 at "; // prefix of the newer batch
 
 export const chapters: Chapter[] = [
   {
@@ -373,8 +374,96 @@ export const chapters: Chapter[] = [
     ],
   },
   {
-    id: "la-famille",
+    id: "au-fil-des-jours",
     index: "IX",
+    eyebrow: "Instants volés",
+    title: "Au Fil des Jours",
+    subtitle:
+      "Piscine, routes, soirées — tous ces petits riens qui font un grand nous.",
+    accent: "gold",
+    photos: [
+      {
+        file: `Nouveau/${N}22.01.25 (3).jpeg`,
+        caption: "Un câlin dans l'eau turquoise",
+        description:
+          "Accrochés l'un à l'autre, même l'eau de la piscine n'a pas pu nous séparer.",
+        orientation: "landscape",
+      },
+      {
+        file: `Nouveau/${N}22.05.24.jpeg`,
+        caption: "Farniente, sable chaud et toi",
+        description:
+          "Transats, brise marine et sieste volée : le paradis a un air de plage.",
+        orientation: "portrait",
+      },
+      {
+        file: `Nouveau/${N}22.01.24 (1).jpeg`,
+        caption: "Grimaces et chill, notre duo du dimanche",
+        description:
+          "Un dimanche tranquille, deux grimaces, et voilà tout notre bonheur résumé.",
+        orientation: "portrait",
+      },
+      {
+        file: `Nouveau/${N}22.01.25 (4).jpeg`,
+        caption: "Ton air sérieux, mon plus grand sourire",
+        description:
+          "Monsieur fait le sérieux, madame rayonne — l'équilibre parfait.",
+        orientation: "portrait",
+      },
+      {
+        file: `Nouveau/${N}22.01.25 (6).jpeg`,
+        caption: "Sur notre trente-et-un, prêts à briller",
+        description:
+          "Robe satinée, costume ajusté : la route peut bien attendre, on est splendides.",
+        orientation: "portrait",
+      },
+      {
+        file: `Nouveau/${N}22.05.25 (1).jpeg`,
+        caption: "En route, le cœur en vacances",
+        description:
+          "Fenêtres ouvertes, lunettes de soleil, et la route qui n'appartient qu'à nous.",
+        orientation: "portrait",
+      },
+      {
+        file: `Nouveau/${N}22.05.25 (2).jpeg`,
+        caption: "Peace, love et kilomètres à deux",
+        description:
+          "Même en noir et blanc, notre complicité saute aux yeux.",
+        orientation: "portrait",
+      },
+      {
+        file: `Nouveau/${N}22.05.24 (1).jpeg`,
+        caption: "Nos soirées aux mille néons",
+        description:
+          "Sous les néons multicolores, nos cœurs dansent toujours au même rythme.",
+        orientation: "portrait",
+      },
+      {
+        file: `Nouveau/${N}22.01.25 (5).jpeg`,
+        caption: "Un baiser au goût d'anniversaire",
+        description:
+          "Sous les ballons, un baiser qui valait tous les cadeaux du monde.",
+        orientation: "landscape",
+      },
+      {
+        file: `Nouveau/${N}22.05.24 (2).jpeg`,
+        caption: "Joue contre joue, tout simplement",
+        description:
+          "Joue contre joue et sourires XXL : la recette de nos plus belles photos.",
+        orientation: "portrait",
+      },
+      {
+        file: `Nouveau/${N}22.05.25.jpeg`,
+        caption: "Nos mains, notre promesse",
+        description:
+          "Deux mains enlacées et une bague qui brille : la plus douce des promesses.",
+        orientation: "portrait",
+      },
+    ],
+  },
+  {
+    id: "la-famille",
+    index: "X",
     eyebrow: "À trois",
     title: "Notre Famille",
     subtitle: "Le plus beau des cadeaux est venu faire déborder notre amour.",
