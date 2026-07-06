@@ -69,7 +69,7 @@ const GROUP = 2;
    le décompte et le retour forcé au début à l'actualisation.
    ⚠️ Remettre à `false` avant la mise en ligne.
    ============================================================ */
-const DEV_SCROLL_LIBRE = true;
+const DEV_SCROLL_LIBRE = false;
 
 type PhotoItem = { photo: Photo; n: number };
 type Scene =
