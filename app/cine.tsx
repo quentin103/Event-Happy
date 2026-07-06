@@ -19,6 +19,11 @@ import {
   Check,
   X,
   Volume2,
+  Sparkles,
+  Star,
+  Gem,
+  Flower2,
+  Music2,
 } from "lucide-react";
 
 import {
@@ -243,8 +248,8 @@ export default function Cine() {
 }
 
 /* ---------- living, luminous background ---------- */
-/* deep-marine stage lit by the wedding palette (orange · fuchsia · gold).
-   4 colour moods rotate so the background is rich, varied & never black. */
+/* scène éclairée par les 6 couleurs officielles du mariage : chaque niveau
+   reçoit un fond unique — uni (camaïeu) ou dégradé — dérivé de son seed. */
 type Orb = {
   c: string;
   s: string;
@@ -253,47 +258,140 @@ type Orb = {
   o: number;
 };
 
+/* couleurs pouvant porter un fond uni (camaïeu) — le marine donne
+   des scènes profondes, les chaudes des scènes éclatantes */
+const UNIS = [
+  "var(--wed-orange)",
+  "var(--wed-fuchsia)",
+  "var(--gold)",
+  "var(--bronze)",
+  "var(--marine)",
+];
+
+/* icônes décoratives qui flottent doucement sur chaque niveau */
+const FLOAT_ICONS = [Heart, Sparkles, Star, Gem, Flower2, Music2];
+const FLOAT_COLORS = [
+  "var(--gold)",
+  "var(--cream)",
+  "var(--wed-orange)",
+  "var(--wed-fuchsia)",
+];
+
+function FloatingDecor({ seed }: { seed: number }) {
+  return (
+    <>
+      {Array.from({ length: 7 }).map((_, i) => {
+        const Icon = FLOAT_ICONS[(seed + i) % FLOAT_ICONS.length];
+        const left = ((seed * 17 + i * 31) % 90) + 4;
+        const top = ((seed * 23 + i * 41) % 72) + 10;
+        const size = 14 + ((seed * 7 + i * 13) % 16);
+        const color = FLOAT_COLORS[(seed + i) % FLOAT_COLORS.length];
+        const filled = Icon === Heart || Icon === Star;
+        return (
+          <Icon
+            key={i}
+            aria-hidden
+            className={i % 2 ? "animate-float-slow" : "animate-float-slower"}
+            style={{
+              position: "absolute",
+              left: `${left}%`,
+              top: `${top}%`,
+              width: size,
+              height: size,
+              color,
+              fill: filled ? color : "none",
+              opacity: 0.3,
+              animationDelay: `${(seed + i * 1.7) % 6}s`,
+              filter: "drop-shadow(0 0 6px rgba(0,0,0,0.25))",
+            }}
+          />
+        );
+      })}
+    </>
+  );
+}
+
+/* positions d'orbes possibles (coins) — le seed choisit lesquelles */
+const CORNERS: React.CSSProperties[] = [
+  { top: "-14vmax", left: "-12vmax" },
+  { top: "-14vmax", right: "-12vmax" },
+  { bottom: "-16vmax", left: "-12vmax" },
+  { bottom: "-16vmax", right: "-10vmax" },
+];
+
 function Backdrop({ seed }: { seed: number }) {
-  const m = seed % 4;
-  const O = "var(--wed-orange)";
-  const F = "var(--wed-fuchsia)";
-  const G = "var(--gold)";
   const glow = (c: string) =>
     `radial-gradient(closest-side, color-mix(in oklch, ${c} 85%, transparent), transparent)`;
 
-  /* the whole frame is washed with a different colour mood per scene */
-  const base = [
-    // warm sunset: orange → marine → fuchsia
-    `linear-gradient(145deg, color-mix(in oklch, var(--wed-orange) 46%, var(--marine-deep)) 0%, var(--marine-deep) 52%, color-mix(in oklch, var(--wed-fuchsia) 30%, var(--marine-deep)) 100%)`,
-    // passion: fuchsia → marine → orange
-    `linear-gradient(135deg, color-mix(in oklch, var(--wed-fuchsia) 48%, var(--marine-deep)) 0%, var(--marine-deep) 55%, color-mix(in oklch, var(--wed-orange) 28%, var(--marine-deep)) 100%)`,
-    // jewel marine → fuchsia
-    `linear-gradient(160deg, color-mix(in oklch, var(--marine) 70%, var(--marine-deep)) 0%, var(--marine-deep) 48%, color-mix(in oklch, var(--wed-fuchsia) 30%, var(--marine-deep)) 100%)`,
-    // gilded warmth: orange → gold → marine
-    `linear-gradient(150deg, color-mix(in oklch, var(--wed-orange) 44%, var(--marine-deep)) 0%, color-mix(in oklch, var(--gold) 26%, var(--marine-deep)) 46%, var(--marine-deep) 100%)`,
-  ][m];
+  /* fond UNIQUE par niveau, avec les 6 couleurs officielles du mariage :
+     - 1 niveau sur 3 → fond « uni » : camaïeu d'une seule couleur ;
+     - sinon → dégradé d'un duo de couleurs.
+     Angle, couleurs et intensités dérivent du seed : jamais deux fois pareil. */
+  const angle = 115 + ((seed * 37) % 130); // 115° → 244°
+  const uni = seed % 3 === 0;
+  let base: string;
+  let cA: string;
+  let cB: string;
 
-  const sets: Orb[][] = [
-    [
-      { c: O, s: "46vmax", css: { top: "-14vmax", left: "-12vmax" }, d: "drift-1", o: 0.44 },
-      { c: G, s: "26vmax", css: { top: "26%", right: "4%" }, d: "drift-2", o: 0.26 },
-      { c: F, s: "34vmax", css: { bottom: "-16vmax", right: "-10vmax" }, d: "drift-1", o: 0.36 },
-    ],
-    [
-      { c: F, s: "46vmax", css: { top: "-14vmax", right: "-12vmax" }, d: "drift-2", o: 0.44 },
-      { c: O, s: "36vmax", css: { bottom: "-16vmax", left: "-12vmax" }, d: "drift-1", o: 0.38 },
-      { c: G, s: "22vmax", css: { top: "40%", left: "44%" }, d: "drift-1", o: 0.24 },
-    ],
-    [
-      { c: O, s: "40vmax", css: { bottom: "-14vmax", left: "-10vmax" }, d: "drift-1", o: 0.4 },
-      { c: F, s: "40vmax", css: { top: "-14vmax", right: "-10vmax" }, d: "drift-2", o: 0.4 },
-      { c: G, s: "22vmax", css: { top: "44%", left: "42%" }, d: "drift-2", o: 0.22 },
-    ],
-    [
-      { c: O, s: "38vmax", css: { top: "-12vmax", left: "-10vmax" }, d: "drift-2", o: 0.42 },
-      { c: F, s: "38vmax", css: { top: "-12vmax", right: "-10vmax" }, d: "drift-1", o: 0.42 },
-      { c: G, s: "26vmax", css: { bottom: "-12vmax", left: "40%" }, d: "drift-1", o: 0.24 },
-    ],
+  /* mélanges en oklab (ligne droite, sans rotation de teinte) : en oklch,
+     pêche/orange mélangés au marine viraient au magenta. */
+  if (seed === 1) {
+    /* ouverture de l'histoire : le 2ᵉ élément (1ᵉʳ niveau photo) démarre
+       sur le BLEU marine, orbes chaudes en contraste */
+    base = `linear-gradient(${angle}deg, color-mix(in oklab, var(--marine) 92%, var(--marine-deep)) 0%, var(--marine-deep) 100%)`;
+    cA = "var(--gold)";
+    cB = "var(--wed-orange)";
+  } else if (uni) {
+    // camaïeu VIF d'une seule couleur (jusqu'à ~93 % de couleur pure)
+    const c = UNIS[Math.floor(seed / 3) % UNIS.length];
+    const hi = 76 + ((seed * 7) % 18); // 76 % → 93 %
+    const lo = 42 + ((seed * 5) % 16); // 42 % → 57 %
+    base = `linear-gradient(${angle}deg, color-mix(in oklab, ${c} ${hi}%, var(--marine-deep)) 0%, color-mix(in oklab, ${c} ${lo}%, var(--marine-deep)) 100%)`;
+    cA = c;
+    cB = c;
+  } else {
+    const [c1, c2] = DUOS[seed % DUOS.length];
+    cA = c1;
+    cB = c2;
+    if (seed % 2 === 1) {
+      // dégradé VIF direct : les deux couleurs presque pures, sans cœur sombre
+      const p1 = 80 + ((seed * 13) % 14); // 80 % → 93 %
+      const p2 = 72 + ((seed * 7) % 16); //  72 % → 87 %
+      base = `linear-gradient(${angle}deg, color-mix(in oklab, ${c1} ${p1}%, var(--marine-deep)) 0%, color-mix(in oklab, ${c2} ${p2}%, var(--marine-deep)) 100%)`;
+    } else {
+      // dégradé profond : duo ancré sur le marine au centre
+      const p1 = 58 + ((seed * 13) % 16); // 58 % → 73 %
+      const p2 = 44 + ((seed * 7) % 16); //  44 % → 59 %
+      const mid = 42 + ((seed * 11) % 18); // position du cœur sombre
+      base = `linear-gradient(${angle}deg, color-mix(in oklab, ${c1} ${p1}%, var(--marine-deep)) 0%, var(--marine-deep) ${mid}%, color-mix(in oklab, ${c2} ${p2}%, var(--marine-deep)) 100%)`;
+    }
+  }
+
+  const orbs: Orb[] = [
+    {
+      c: cA,
+      s: `${40 + ((seed * 5) % 8)}vmax`,
+      css: CORNERS[seed % 4],
+      d: seed % 2 ? "drift-1" : "drift-2",
+      o: 0.42,
+    },
+    {
+      c: cB,
+      s: `${32 + ((seed * 3) % 8)}vmax`,
+      css: CORNERS[(seed + 2) % 4],
+      d: seed % 2 ? "drift-2" : "drift-1",
+      o: 0.34,
+    },
+    {
+      c: "var(--gold)",
+      s: "22vmax",
+      css: {
+        top: `${28 + ((seed * 9) % 26)}%`,
+        left: `${36 + ((seed * 17) % 26)}%`,
+      },
+      d: "drift-1",
+      o: 0.2,
+    },
   ];
 
   return (
@@ -301,7 +399,7 @@ function Backdrop({ seed }: { seed: number }) {
       className="absolute inset-0 overflow-hidden"
       style={{ background: base }}
     >
-      {sets[m].map((orb, i) => (
+      {orbs.map((orb, i) => (
         <div
           key={i}
           className={`aurora ${orb.d}`}
@@ -315,6 +413,7 @@ function Backdrop({ seed }: { seed: number }) {
         />
       ))}
       <div className="spotlight" />
+      <FloatingDecor seed={seed} />
       {BOKEH.map((b, i) => (
         <span
           key={i}
