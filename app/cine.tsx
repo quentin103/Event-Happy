@@ -9,7 +9,6 @@ import {
   useReducedMotion,
   type Variants,
 } from "motion/react";
-import { gsap } from "gsap";
 import {
   Heart,
   CalendarDays,
